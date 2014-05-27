@@ -20,4 +20,5 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rake"
 
   spec.add_dependency "fog", ">=1.22.0"
+  spec.add_dependency "pry", ">=0.9.12.6"
 end
