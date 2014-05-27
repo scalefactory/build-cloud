@@ -1,0 +1,181 @@
+#!/usr/bin/env ruby
+
+$:.push( File.join( File.dirname(__FILE__), 'lib' ) )
+
+require 'optparse'
+
+require 'build-cloud'
+require 'build-cloud/component'
+require 'build-cloud/vpc'
+require 'build-cloud/subnet'
+require 'build-cloud/routetable'
+require 'build-cloud/route'
+require 'build-cloud/zone'
+require 'build-cloud/securitygroup'
+require 'build-cloud/launchconfiguration'
+require 'build-cloud/loadbalancer'
+require 'build-cloud/asgroup'
+require 'build-cloud/r53recordset'
+require 'build-cloud/rdsserver'
+require 'build-cloud/dbsubnetgroup'
+require 'build-cloud/dbparametergroup'
+require 'build-cloud/cachesubnetgroup'
+require 'build-cloud/cachecluster'
+require 'build-cloud/cacheparametergroup'
+require 'build-cloud/iamrole'
+require 'build-cloud/s3bucket'
+require 'build-cloud/instance'
+require 'build-cloud/networkinterface'
+require 'build-cloud/internetgateway'
+
+options = {}
+optparse = OptionParser.new do |opts|
+
+    options[:config] = nil
+    opts.on('-c', '--config=file', 'Config file path') do |c|
+        options[:config] = c
+    end
+
+    options[:debug] = false
+    opts.on('-d', '--debug', 'Enable debugging') do
+        options[:debug] = true
+    end
+
+    options[:mock] = false
+    opts.on('-m', '--mock', 'Use fog\'s mock interfaces') do
+        options[:mock] = true
+    end
+
+    options[:all] = false
+    opts.on('--all', 'Select all objects') do
+        options[:all] = true
+    end
+
+    options[:create] = false
+    opts.on('--create', 'Create objects') do
+        options[:create] = true
+    end
+
+    options[:delete] = false
+    opts.on('--delete', 'Delete objects') do
+        options[:delete] = true
+    end
+
+    options[:read] = false
+    opts.on('--read', 'read objects') do
+        options[:read] = true
+    end
+
+    options[:pry] = false
+    opts.on('--pry', 'Start pry console') do
+        options[:pry] = true
+    end
+
+    options[:find_type] = []
+    opts.on('--find-type=t', 'Find objects by type') do |t|
+        options[:find_type].push(t.to_sym)
+    end
+
+    options[:find] = {}
+    opts.on('--find=f', 'Find objects by key match') do |f|
+        args = f.split('=')
+        options[:find][ args[0].to_sym ] = args[1]
+    end
+
+
+end
+
+begin
+
+    optparse.parse!
+
+    if options[:config].nil?
+        raise OptionParser::MissingArgument, "--config"
+    end
+
+    if options[:create] and options[:delete]
+        raise OptionParser::InvalidOption, "Choose only one of --create or --delete"
+    end
+
+    if !options[:create] and !options[:delete]
+        options[:read] = true
+    end
+
+    if options[:all] and ( !options[:find].empty? or options[:find_type].length > 0 )
+        raise OptionParser::InvalidOption, "Use either --all or the --find/--find-type options, not both"
+    end
+
+    options[:find_type].each do |ft|
+        if !BuildCloud.dispatch.keys.include?(ft)
+            raise OptionParser::InvalidOption, "--find-type didn't match one of #{BuildCloud.dispatch.keys.join(', ')}"
+        end
+    end
+
+rescue OptionParser::InvalidOption, OptionParser::MissingArgument
+
+    $stderr.puts $!.to_s
+    $stderr.puts optparse
+    exit 2
+
+end
+
+log = Logger.new(STDERR)
+
+if options[:debug]
+    log.level = Logger::DEBUG
+else
+    log.level = Logger::INFO
+end
+
+inf = BuildCloud.new( :config => options[:config], :logger => log, :mock => options[:mock] )
+
+
+if options[:all]
+
+    objects = inf.all
+
+else
+
+    objects = []
+
+    options[:find_type].each do |ft|
+        objects.concat inf.find( ft, options[:find] )
+    end
+
+    if objects.length == 0
+        $stderr.puts "Didn't find any matching object"
+    end
+
+end
+
+
+if options[:create]
+
+    objects.each do |o|
+        begin
+            o.create
+            o.wait_until_ready
+        rescue Fog::Errors::MockNotImplemented => e
+            log.error("No Fog mock support for #{o.class}")
+        end
+    end
+
+elsif options[:delete]
+
+    objects.reverse.each do |o|
+        o.delete
+    end
+
+elsif options[:read]
+
+    objects.each do |o|
+        puts o.inspect
+    end
+
+end
+
+
+if options[:pry]
+    inf.pry
+end
+
