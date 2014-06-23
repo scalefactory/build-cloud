@@ -45,11 +45,12 @@ class BuildCloud::EBSVolume
         volume = @compute.volumes.new(options)
         volume.save
 
-#        attributes = {}
-#        attributes[:tags]['Name'] = @options[:name]
-#        attributes[:size] = options[:description]
-#        volume_tag = @compute.tags.new( attributes )
-#        volume_tag.save
+        attributes = {}
+        attributes[:resource_id] = volume.id.to_s
+        attributes[:key] = 'Name'
+        attributes[:value] = @options[:name]
+        volume_tag = @compute.tags.new( attributes )
+        volume_tag.save
 
         @log.debug( volume.inspect )
 
