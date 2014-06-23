@@ -54,6 +54,12 @@ class BuildCloud::EBSVolume
 
         @log.debug( volume.inspect )
 
+        if @options[:instance_name]
+            instance_id = BuildCloud::Instance.get_id_by_name( options[:instance_name] )
+            attach_response = @compute.attach_volume(instance_id, volume.id, options[:device])
+            @log.debug( attach_response.inspect )
+        end
+
     end
 
     def read
