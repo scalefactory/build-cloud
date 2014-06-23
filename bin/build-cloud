@@ -25,6 +25,7 @@ require 'build-cloud/cacheparametergroup'
 require 'build-cloud/iamrole'
 require 'build-cloud/s3bucket'
 require 'build-cloud/instance'
+require 'build-cloud/ebsvolume'
 require 'build-cloud/networkinterface'
 require 'build-cloud/internetgateway'
 

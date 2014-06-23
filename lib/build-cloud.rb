@@ -99,6 +99,7 @@ class BuildCloud
             :iam_roles             => BuildCloud::IAMRole,
             :s3_buckets            => BuildCloud::S3Bucket,
             :instances             => BuildCloud::Instance,
+            :ebs_volumes           => BuildCloud::EBSVolume,
         }
 
     end
@@ -125,6 +126,7 @@ class BuildCloud
             :as_groups,
             :r53_record_sets,
             :s3_buckets,
+            :ebs_volumes,
             :instances,
         ]
     end
