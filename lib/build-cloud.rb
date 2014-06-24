@@ -16,8 +16,18 @@ class BuildCloud
         @log = options[:logger] or Logger.new( STDERR )
         @mock = options[:mock] or false
         @config = YAML::load( File.open( options[:config] ) )
+
+        include_files=Array.new
+        if include_yaml = @config.delete(:include)
+            if include_yaml.is_a?(Array)
+                include_files.concat(include_yaml)
+            else
+                include_files.push(include_yaml)
+            end
+        end
         
-        if include_file = @config.delete(:include)
+        include_files.each do |include_file|
+
             include_path = File.join( File.dirname( options[:config] ), include_file)
 
             if File.exists?( include_path )
