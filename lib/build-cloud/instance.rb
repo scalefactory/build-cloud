@@ -1,3 +1,5 @@
+require 'erb'
+
 class BuildCloud::Instance
 
     include ::BuildCloud::Component
@@ -34,6 +36,7 @@ class BuildCloud::Instance
         require_one_of(:security_group_ids, :security_group_names, :network_interfaces)
         require_one_of(:subnet_id, :subnet_name, :network_interfaces)
         #require_one_of(:network_interfaces, :private_ip_address)
+        require_one_of(:user_data, :user_data_file, :user_data_template)
         require_one_of(:vpc_id, :vpc_name)
 
     end
@@ -92,7 +95,37 @@ class BuildCloud::Instance
             options.delete(:subnet_id)
         end
 
-        options[:user_data] = JSON.generate( @options[:user_data] )
+        if options[:user_data]
+
+            options[:user_data] = JSON.generate( options[:user_data] )
+
+        elsif options[:user_data_file]
+
+            user_data_file_path = File.join( Dir.pwd, options[:user_data_file])
+
+            if File.exists?( user_data_file_path )
+                options[:user_data] = File.read( user_data_file_path )
+                options.delete(:user_data_file)
+            else
+                @log.error("config lists a :user_data_file that doesn't exist at #{options[:user_data_file]}")
+            end
+
+        elsif options[:user_data_template]
+
+            variable_hash = options[:user_data_variables]
+            user_data_template_path = File.join( Dir.pwd, options[:user_data_template])
+
+            if File.exists?( user_data_template_path )
+                template = File.read( user_data_template_path )
+                buffer = ERB.new(template).result(binding)
+                options[:user_data] = buffer
+                options.delete(:user_data_variables)
+                options.delete(:user_data_template)
+            else
+                @log.error("config lists a :user_data_template that doesn't exist at #{options[:user_data_template]}")
+            end
+
+        end
 
         options[:network_interfaces].each { |iface|
             if ! iface[:network_interface_name].nil?
@@ -117,6 +150,26 @@ class BuildCloud::Instance
         end unless options[:tags].empty? or options[:tags].nil?
 
         @log.debug( instance.inspect )
+
+        if options[:ebs_volumes]
+
+            instance = @ec2.servers.get(instance.id)
+            instance_state = instance.state
+
+            until instance_state == 'running'
+                @log.info( "instance not ready yet: #{instance_state}" )
+                sleep 3
+                instance = @ec2.servers.get(instance.id)
+                instance_state = instance.state
+            end
+
+            instance_id = instance.id
+            options[:ebs_volumes].each do |vol|
+                vol_id = BuildCloud::EBSVolume.get_id_by_name( vol[:name] )
+                attach_response = @ec2.attach_volume(instance_id, vol_id, vol[:device])
+                @log.debug( attach_response.inspect )
+            end
+        end
 
     end
 
