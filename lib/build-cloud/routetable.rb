@@ -18,7 +18,7 @@ class BuildCloud::RouteTable
             raise "Couldn't get a RouteTable fog object for #{name} - is it created?"
         end
 
-        route_table_fog.route_table_id
+        route_table_fog.id
 
     end
 

@@ -18,7 +18,7 @@ class BuildCloud::InternetGateway
             raise "Couldn't get an InternetGateway fog object for #{name} - is it created?"
         end
 
-        internet_gateway_fog.internet_gateway_id
+        internet_gateway_fog.id
 
     end
 

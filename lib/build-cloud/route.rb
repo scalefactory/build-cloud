@@ -28,17 +28,17 @@ class BuildCloud::Route
 
         options[:tags] = { 'Name' => options.delete(:name) }
 
-        unless options[:network_interface_name]
+        unless options[:network_interface_name].nil?
             options[:network_interface_id] = BuildCloud::NetworkInterface.get_id_by_name( options[:network_interface_name] )
             options.delete(:network_interface_name)
         end
 
-        unless options[:internet_gateway_name]
+        if options[:internet_gateway_name]
             options[:internet_gateway_id] = BuildCloud::InternetGateway.get_id_by_name( options[:internet_gateway_name] )
             options.delete(:internet_gateway_name)
         end
 
-        unless options[:route_table_name]
+        if options[:route_table_name]
             options[:route_table_id] = BuildCloud::RouteTable.get_id_by_name( options[:route_table_name] )
             options.delete(:route_table_name)
         end
@@ -46,14 +46,14 @@ class BuildCloud::Route
         route_table_id = options[:route_table_id]
         destination_cidr_block = options[:destination_cidr_block]
         internet_gateway_id = options[:internet_gateway_id]
-        network_interface_id = options[:network_interface_id]
+        network_interface_id = options[:network_interface_id] ||= nil
 
         # Using requests instead of model here, because the model
         #  doesn't support associations.
 
         begin
 
-            if create_route(route_table_id, destination_cidr_block, internet_gateway_id, nil, network_interface_id)
+            if @compute.create_route(route_table_id, destination_cidr_block, internet_gateway_id, nil, network_interface_id)
                 @log.debug("route created successfully")
             else 
                 @log.debug("failed to create route")
@@ -68,11 +68,14 @@ class BuildCloud::Route
     def read
         rt = @compute.route_tables.select { |rt| rt.tags['Name'] == @options[:name] }.first 
         @log.info( rt.inspect )
-        @log.info( rt.routes ) unless rt.routes.empty?
 
-        route = rt.routes.select { |t| t['destinationCidrBlock'] == @options[:destination_cidr_block]}
-        @log.info( route.inspect )
-
+        unless rt.nil?
+            @log.info( rt.routes )
+            route = rt.routes.select { |t| t['destinationCidrBlock'] == @options[:destination_cidr_block]}
+            @log.info( route.inspect )
+        else
+            nil
+        end
     end
 
     alias_method :fog_object, :read

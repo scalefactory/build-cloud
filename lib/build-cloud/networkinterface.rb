@@ -81,18 +81,19 @@ class BuildCloud::NetworkInterface
         end
 
         if options[:assign_new_public_ip]
-            ip = @compute.addresses.create
-            public_ip = ip.public_ip
-            allocation_id = ip.allocation_id
-            @compute.associate_address(nil, nil, interface.network_interface_id, allocation_id )
-            @log.info( "Assigned new public IP #{public_ip}" )
+            ### Need to use the request here, in order to support older accounts which still have
+            ### 'EC2 Classic' regions/azs assigned
+            ip = @compute.allocate_address(domain='vpc')
+            public_ip = ip.body['publicIp']
+            allocation_id = ip.body['allocationId']
+            @compute.associate_address(nil, public_ip, interface.network_interface_id, allocation_id )
         end
 
         unless options[:existing_public_ip].nil?
             ip = @compute.addresses.get(options[:existing_public_ip])
             public_ip = ip.public_ip
             allocation_id = ip.allocation_id
-            @compute.associate_address(nil, nil, interface.network_interface_id, allocation_id )
+            @compute.associate_address(nil, ip.public_ip, interface.network_interface_id, allocation_id )
         end
 
         @log.debug( interface.inspect )
