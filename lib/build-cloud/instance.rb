@@ -32,7 +32,7 @@ class BuildCloud::Instance
 
         @log.debug( options.inspect )
 
-        required_options(:image_id, :flavor_id, :private_ip_address, :name)
+        required_options(:image_id, :flavor_id, :name)
         require_one_of(:security_group_ids, :security_group_names, :network_interfaces)
         require_one_of(:subnet_id, :subnet_name, :network_interfaces)
         #require_one_of(:network_interfaces, :private_ip_address)
