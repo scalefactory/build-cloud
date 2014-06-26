@@ -53,14 +53,18 @@ class BuildCloud::Subnet
         subnet = @compute.subnets.new( options )
         subnet.save
 
-        options[:tag_set].each do | tag |
-            attributes = {}
-            attributes[:resource_id] = subnet.subnet_id.to_s
-            attributes[:key] = tag[:key]
-            attributes[:value] = tag[:value]
-            new_tag = @compute.tags.new( attributes )
-            new_tag.save
-        end unless options[:tag_set].empty? or options[:tag_set].nil?
+        if options[:tag_set]
+
+            options[:tag_set].each do | tag |
+                attributes = {}
+                attributes[:resource_id] = subnet.subnet_id.to_s
+                attributes[:key] = tag[:key]
+                attributes[:value] = tag[:value]
+                new_tag = @compute.tags.new( attributes )
+                new_tag.save
+            end unless options[:tag_set].empty? or options[:tag_set].nil?
+
+        end
 
         @log.debug( subnet.inspect )
 

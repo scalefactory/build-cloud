@@ -31,8 +31,9 @@ class BuildCloud
             include_path = File.join( File.dirname( options[:config] ), include_file)
 
             if File.exists?( include_path )
-               included_conf = YAML::load( File.open( include_path ) )
-               @config = @config.merge( included_conf )
+                @log.info( "Including YAML file #{include_path}" )
+                included_conf = YAML::load( File.open( include_path ) )
+                @config = @config.merge( included_conf )
             end
 
         end

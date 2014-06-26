@@ -85,6 +85,7 @@ class BuildCloud::NetworkInterface
             public_ip = ip.public_ip
             allocation_id = ip.allocation_id
             @compute.associate_address(nil, nil, interface.network_interface_id, allocation_id )
+            @log.info( "Assigned new public IP #{public_ip}" )
         end
 
         unless options[:existing_public_ip].nil?
