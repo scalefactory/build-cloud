@@ -67,15 +67,10 @@ class BuildCloud::Route
 
     def read
         rt = @compute.route_tables.select { |rt| rt.tags['Name'] == @options[:name] }.first 
-        @log.info( rt.inspect )
-
-        unless rt.nil?
-            @log.info( rt.routes )
-            route = rt.routes.select { |t| t['destinationCidrBlock'] == @options[:destination_cidr_block]}
-            @log.info( route.inspect )
-        else
-            nil
-        end
+        @log.debug( rt.inspect )
+        route = rt.routes.select { |t| t['destinationCidrBlock'] == @options[:destination_cidr_block]}.first unless rt.nil?
+        @log.debug( route.inspect )
+        return true unless route.nil?
     end
 
     alias_method :fog_object, :read
@@ -84,9 +79,11 @@ class BuildCloud::Route
 
         return unless exists?
 
-        @log.info("Deleting route #{@options[:name]}")
+        options = @options.dup
 
-        unless options[:route_table_name]
+        @log.info("Deleting route #{options[:name]}")
+
+        unless options[:route_table_name].nil?
             options[:route_table_id] = BuildCloud::RouteTable.get_id_by_name( options[:route_table_name] )
             options.delete(:route_table_name)
         end
@@ -96,7 +93,7 @@ class BuildCloud::Route
 
         begin
 
-            if delete_route(route_table_id, destination_cidr_block)
+            if @compute.delete_route(route_table_id, destination_cidr_block)
                 @log.debug("route deleted successfully")
             else 
                 @log.debug("failed to delet route")
