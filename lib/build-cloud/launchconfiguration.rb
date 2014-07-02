@@ -14,8 +14,9 @@ class BuildCloud::LaunchConfiguration
 
         @log.debug( options.inspect )
 
-        required_options(:id, :image_id, :key_name, :user_data, :instance_type)
+        required_options(:id, :image_id, :key_name, :instance_type)
         require_one_of(:security_groups, :security_group_names)
+        require_one_of(:user_data, :user_data_file, :user_data_template)
 
     end
 
@@ -39,7 +40,37 @@ class BuildCloud::LaunchConfiguration
 
         end
 
-        options[:user_data] = JSON.generate( @options[:user_data] )
+        if options[:user_data]
+
+            options[:user_data] = JSON.generate( @options[:user_data] )
+
+        elsif options[:user_data_file]
+
+            user_data_file_path = File.join( Dir.pwd, options[:user_data_file])
+
+            if File.exists?( user_data_file_path )
+                options[:user_data] = File.read( user_data_file_path )
+                options.delete(:user_data_file)
+            else
+                @log.error("config lists a :user_data_file that doesn't exist at #{options[:user_data_file]}")
+            end
+
+        elsif options[:user_data_template]
+
+            variable_hash = options[:user_data_variables]
+            user_data_template_path = File.join( Dir.pwd, options[:user_data_template])
+
+            if File.exists?( user_data_template_path )
+                template = File.read( user_data_template_path )
+                buffer = ERB.new(template).result(binding)
+                options[:user_data] = buffer
+                options.delete(:user_data_variables)
+                options.delete(:user_data_template)
+            else
+                @log.error("config lists a :user_data_template that doesn't exist at #{options[:user_data_template]}")
+            end
+
+        end
 
         launch_config = @as.configurations.new( options )
         launch_config.save
