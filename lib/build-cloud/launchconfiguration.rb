@@ -62,7 +62,7 @@ class BuildCloud::LaunchConfiguration
 
             if File.exists?( user_data_template_path )
                 template = File.read( user_data_template_path )
-                buffer = ERB.new(template).result(binding)
+                buffer = ERB.new(template,0,'<>').result(binding)
                 options[:user_data] = buffer
                 options.delete(:user_data_variables)
                 options.delete(:user_data_template)
