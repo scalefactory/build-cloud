@@ -117,7 +117,9 @@ class BuildCloud::Instance
 
             if File.exists?( user_data_template_path )
                 template = File.read( user_data_template_path )
-                buffer = ERB.new(template,0,'<>').result(binding)
+                ### We set 'trim_mode' to '-', which supresses end of line white space on lines ending in '-%>'
+                ### see http://ruby-doc.org/stdlib-2.1.2/libdoc/erb/rdoc/ERB.html#method-c-new
+                buffer = ERB.new(template,nil,'-').result(binding)
                 options[:user_data] = buffer
                 options.delete(:user_data_variables)
                 options.delete(:user_data_template)
