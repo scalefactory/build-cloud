@@ -68,6 +68,7 @@ class BuildCloud::NetworkInterface
 
         interface = @compute.network_interfaces.new(options)
         interface.save
+        wait_until_ready
 
         attributes = {}
         attributes[:resource_id] = interface.network_interface_id
