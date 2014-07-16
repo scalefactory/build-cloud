@@ -73,6 +73,9 @@ class BuildCloud::RouteTable
         rt.save
         @log.debug(rt.inspect)
 
+        ### sometimes tag creation will fail unless we wait until the API catches up:
+        wait_until_ready
+
         @compute.create_tags( rt.id, options[:tags] )
        
         options[:subnet_ids].each do |s|
