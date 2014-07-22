@@ -160,7 +160,24 @@ class BuildCloud::Instance
             options[:ebs_volumes].each do |vol|
                 vol_id = BuildCloud::EBSVolume.get_id_by_name( vol[:name] )
                 attach_response = @ec2.attach_volume(instance_id, vol_id, vol[:device])
+                if attach_response.body["return"]
+                    disk_attached = true
+                else
+                    @log.error("Failed to attach volume: #{vol[:device]} with name: #{vol[:name]}")
+                end
                 @log.debug( attach_response.inspect )
+
+                if vol[:delete_on_termination] and disk_attached
+                    request_resp = @ec2.modify_instance_attribute(
+                        instance_id,
+                        { "BlockDeviceMapping.DeviceName" => "#{vol[:device]}",
+                          "BlockDeviceMapping.Ebs.DeleteOnTermination" => true }
+                    )
+                    unless request_resp.body["return"]
+                        @log.error("Failed to set delete_on_termination for volume: #{vol[:name]}")
+                    end
+                    @log.debug( request_resp.inspect )
+                end
             end
         end
 
