@@ -1,4 +1,5 @@
 require 'erb'
+require 'timeout'
 
 class BuildCloud::Instance
 
@@ -149,25 +150,39 @@ class BuildCloud::Instance
             instance = @ec2.servers.get(instance.id)
             instance_state = instance.state
 
-            until instance_state == 'running'
-                @log.info( "instance not ready yet: #{instance_state}" )
-                sleep 3
-                instance = @ec2.servers.get(instance.id)
-                instance_state = instance.state
+            begin
+                Timeout::timeout(30) {
+                    until instance_state == 'running'
+                        @log.info( "instance not ready yet: #{instance_state}" )
+                        sleep 3
+                        instance = @ec2.servers.get(instance.id)
+                        instance_state = instance.state
+                    end
+                }
+            rescue Timeout::Error
+                @log.error("Waiting on instance availability timed out: #{vol[:name]}, timed out")
             end
 
             instance_id = instance.id
             options[:ebs_volumes].each do |vol|
                 vol_id = BuildCloud::EBSVolume.get_id_by_name( vol[:name] )
                 attach_response = @ec2.attach_volume(instance_id, vol_id, vol[:device])
-                if attach_response.body["return"]
-                    disk_attached = true
-                else
-                    @log.error("Failed to attach volume: #{vol[:device]} with name: #{vol[:name]}")
-                end
                 @log.debug( attach_response.inspect )
+                volume_state = @ec2.volumes.get(vol_id).state
 
-                if vol[:delete_on_termination] and disk_attached
+                begin
+                    Timeout::timeout(30) {
+                        until volume_state == 'in-use'
+                            @log.info( "Volume not attached yet: #{volume_state}" )
+                            sleep 3
+                            volume_state = @ec2.volumes.get(vol_id).state
+                        end
+                    }
+                rescue Timeout::Error
+                    @log.error("Operation to attach volume: #{vol[:name]}, timed out")
+                end
+
+                if vol[:delete_on_termination] and volume_state == 'in-use'
                     request_resp = @ec2.modify_instance_attribute(
                         instance_id,
                         { "BlockDeviceMapping.DeviceName" => "#{vol[:device]}",
