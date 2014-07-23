@@ -1,4 +1,5 @@
 require 'erb'
+require 'timeout'
 
 class BuildCloud::Instance
 
@@ -149,11 +150,18 @@ class BuildCloud::Instance
             instance = @ec2.servers.get(instance.id)
             instance_state = instance.state
 
-            until instance_state == 'running'
-                @log.info( "instance not ready yet: #{instance_state}" )
-                sleep 3
-                instance = @ec2.servers.get(instance.id)
-                instance_state = instance.state
+            begin
+                Timeout::timeout(30) {
+                    until instance_state == 'running'
+                        @log.info( "instance not ready yet: #{instance_state}" )
+                        sleep 3
+                        instance = @ec2.servers.get(instance.id)
+                        instance_state = instance.state
+                    end
+                    @log.debug("Instance state: #{instance_state}")
+                }
+            rescue Timeout::Error
+                @log.error("Waiting on availability for instance: #{instance.id}, timed out")
             end
 
             instance_id = instance.id
@@ -161,6 +169,32 @@ class BuildCloud::Instance
                 vol_id = BuildCloud::EBSVolume.get_id_by_name( vol[:name] )
                 attach_response = @ec2.attach_volume(instance_id, vol_id, vol[:device])
                 @log.debug( attach_response.inspect )
+                volume_state = @ec2.volumes.get(vol_id).state
+
+                begin
+                    Timeout::timeout(30) {
+                        until volume_state == 'in-use'
+                            @log.info( "Volume not attached yet: #{volume_state}" )
+                            sleep 3
+                            volume_state = @ec2.volumes.get(vol_id).state
+                        end
+                        @log.debug("Volume state: #{volume_state}")
+                    }
+                rescue Timeout::Error
+                    @log.error("Operation to attach volume: #{vol[:name]}, timed out")
+                end
+
+                if vol[:delete_on_termination] and volume_state == 'in-use'
+                    request_resp = @ec2.modify_instance_attribute(
+                        instance_id,
+                        { "BlockDeviceMapping.DeviceName" => "#{vol[:device]}",
+                          "BlockDeviceMapping.Ebs.DeleteOnTermination" => true }
+                    )
+                    unless request_resp.body["return"]
+                        @log.error("Failed to set delete_on_termination for volume: #{vol[:name]}")
+                    end
+                    @log.debug( request_resp.inspect )
+                end
             end
         end
 
