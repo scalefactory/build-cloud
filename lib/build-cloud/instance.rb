@@ -158,9 +158,10 @@ class BuildCloud::Instance
                         instance = @ec2.servers.get(instance.id)
                         instance_state = instance.state
                     end
+                    @log.debug("Instance state: #{instance_state}")
                 }
             rescue Timeout::Error
-                @log.error("Waiting on instance availability timed out: #{vol[:name]}, timed out")
+                @log.error("Waiting on availability for instance: #{instance.id}, timed out")
             end
 
             instance_id = instance.id
@@ -177,6 +178,7 @@ class BuildCloud::Instance
                             sleep 3
                             volume_state = @ec2.volumes.get(vol_id).state
                         end
+                        @log.debug("Volume state: #{volume_state}")
                     }
                 rescue Timeout::Error
                     @log.error("Operation to attach volume: #{vol[:name]}, timed out")
