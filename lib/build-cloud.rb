@@ -31,7 +31,12 @@ class BuildCloud
         
         include_files.each do |include_file|
 
-            include_path = File.join( File.dirname( first_config_file ), include_file)
+            include_path = ''
+            if include_file.include? '/'
+                include_path = include_file
+            else
+                include_path = File.join( File.dirname( first_config_file ), include_file)
+            end
 
             if File.exists?( include_path )
                 @log.info( "Including YAML file #{include_path}" )
