@@ -38,7 +38,7 @@ class BuildCloud::DHCPOptionsSet
         
         return if exists?
 
-        @log.info( "Creating new DHCP Options Set for #{@options[:cidr_block]}" )
+        @log.info( "Creating new DHCP Options Set for #{@options[:name]}" )
 
         options = @options.dup
 
@@ -46,6 +46,8 @@ class BuildCloud::DHCPOptionsSet
 
         dhcp_option = @compute.dhcp_options.new( options )
         dhcp_option.save
+
+        @compute.create_tags( dhcp_option.id, options[:tags] )
 
         @log.debug( dhcp_option.inspect )
 
