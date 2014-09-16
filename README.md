@@ -22,6 +22,8 @@ See the command line help for `build-cloud`.
 
 ## Changelog
 
+2014-09-16 - version 0.0.5 - now supports creation of DHCP Options Sets, and specifying them using the `:dhcp_options_set_name` key to a VPC.
+
 2014-09-15 - version 0.0.4 - files can now be passed to `--config` with a path. It is no longer assumed that all files will be in the same directory.
 
 2014-09-15 - version 0.0.3 - now accepts multiple files to `--config`. The second and subsequent files are merged into the first YAML file in order, ahead of any files specified in a `:include` list in the first YAML file.
