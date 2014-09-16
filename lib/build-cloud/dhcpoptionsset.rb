@@ -6,19 +6,19 @@ class BuildCloud::DHCPOptionsSet
 
     def self.get_id_by_name( name )
 
-        dhcpos = self.search( :name => name ).first
+        dhcp_option = self.search( :name => name ).first
 
-        unless dhcpos
+        unless dhcp_option
             raise "Couldn't get a DHCP Options Set object for #{name} - is it defined?"
         end
 
-        dhcpos_fog = dhcpos.read
+        dhcp_option_fog = dhcp_option.read
 
-        unless vpc_fog
+        unless dhcp_option_fog
             raise "Couldn't get a DHCP Options Set fog object for #{name} - is it created?"
         end
 
-        dhcpos_fog.id
+        dhcp_option_fog.id
 
     end
 
@@ -40,17 +40,19 @@ class BuildCloud::DHCPOptionsSet
 
         @log.info( "Creating new DHCP Options Set for #{@options[:cidr_block]}" )
 
+        options = @options.dup
+
         options[:tags] = { 'Name' => options.delete(:name) }
 
-        dhcpos = @compute.dhcp_option.new( @options )
-        dhcpos.save
+        dhcp_option = @compute.dhcp_options.new( options )
+        dhcp_option.save
 
-        @log.debug( dhcpos.inspect )
+        @log.debug( dhcp_option.inspect )
 
     end
 
     def read
-        @compute.dhcpos.select { |d| d.tag_set['Name'] == @options[:name] }.first
+        @compute.dhcp_options.select { |d| d.tag_set['Name'] == @options[:name] }.first
     end
 
     alias_method :fog_object, :read
