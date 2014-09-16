@@ -42,6 +42,14 @@ class BuildCloud::VPC
 
         vpc = @compute.vpcs.new( @options )
         vpc.save
+        wait_until_ready
+
+        if @options[:dhcp_options_set_name]
+            dhcp_option_set_id = BuildCloud::DHCPOptionsSet.get_id_by_name( @options[:dhcp_options_set_name] )
+            @log.info( "Associating DHCP Options Set #{dhcp_option_set_id} with new VPC ID #{vpc.id}" )
+            @compute.associate_dhcp_options( dhcp_option_set_id, 
+                                             vpc.id )
+        end
 
         @log.debug( vpc.inspect )
 
