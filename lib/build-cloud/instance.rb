@@ -114,7 +114,13 @@ class BuildCloud::Instance
         elsif options[:user_data_template]
 
             variable_hash = options[:user_data_variables]
-            user_data_template_path = File.join( Dir.pwd, options[:user_data_template])
+
+            user_data_template_path = ''
+            if options[:user_data_template].include? '/'
+                user_data_template_path = options[:user_data_template]
+            else
+                user_data_template_path = File.join( Dir.pwd, options[:user_data_template])
+            end
 
             if File.exists?( user_data_template_path )
                 template = File.read( user_data_template_path )
