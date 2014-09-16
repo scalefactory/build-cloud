@@ -28,6 +28,8 @@ require 'build-cloud/instance'
 require 'build-cloud/ebsvolume'
 require 'build-cloud/networkinterface'
 require 'build-cloud/internetgateway'
+require 'build-cloud/dhcpoptionsset'
+
 
 options = {}
 optparse = OptionParser.new do |opts|
