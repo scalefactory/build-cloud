@@ -28,12 +28,14 @@ require 'build-cloud/instance'
 require 'build-cloud/ebsvolume'
 require 'build-cloud/networkinterface'
 require 'build-cloud/internetgateway'
+require 'build-cloud/dhcpoptionsset'
+
 
 options = {}
 optparse = OptionParser.new do |opts|
 
     options[:config] = nil
-    opts.on('-c', '--config=file', 'Config file path') do |c|
+    opts.on('-c', '--config file1,file2', Array, 'Config files - second and subsequent files merged into first.') do |c|
         options[:config] = c
     end
 
@@ -73,12 +75,12 @@ optparse = OptionParser.new do |opts|
     end
 
     options[:find_type] = []
-    opts.on('--find-type=t', 'Find objects by type') do |t|
+    opts.on('--find-type t', 'Find objects by type') do |t|
         options[:find_type].push(t.to_sym)
     end
 
     options[:find] = {}
-    opts.on('--find=f', 'Find objects by key match') do |f|
+    opts.on('--find f', 'Find objects by key match') do |f|
         args = f.split('=')
         options[:find][ args[0].to_sym ] = args[1]
     end

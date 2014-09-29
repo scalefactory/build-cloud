@@ -15,9 +15,12 @@ class BuildCloud
 
         @log = options[:logger] or Logger.new( STDERR )
         @mock = options[:mock] or false
-        @config = YAML::load( File.open( options[:config] ) )
+        
+        first_config_file = options[:config].shift
 
-        include_files=Array.new
+        @config = YAML::load( File.open( first_config_file ) )
+
+        include_files = options[:config]
         if include_yaml = @config.delete(:include)
             if include_yaml.is_a?(Array)
                 include_files.concat(include_yaml)
@@ -28,7 +31,12 @@ class BuildCloud
         
         include_files.each do |include_file|
 
-            include_path = File.join( File.dirname( options[:config] ), include_file)
+            include_path = ''
+            if include_file.include? '/'
+                include_path = include_file
+            else
+                include_path = File.join( File.dirname( first_config_file ), include_file)
+            end
 
             if File.exists?( include_path )
                 @log.info( "Including YAML file #{include_path}" )
@@ -89,34 +97,36 @@ class BuildCloud
     def self.dispatch
 
         {
-            :vpcs                  => BuildCloud::VPC,
-            :internet_gateways     => BuildCloud::InternetGateway,
-            :subnets               => BuildCloud::Subnet,
-            :route_tables          => BuildCloud::RouteTable,
-            :zones                 => BuildCloud::Zone,
-            :security_groups       => BuildCloud::SecurityGroup,
-            :network_interfaces    => BuildCloud::NetworkInterface,
-            :routes                => BuildCloud::Route,
-            :launch_configurations => BuildCloud::LaunchConfiguration,
-            :load_balancers        => BuildCloud::LoadBalancer,
-            :as_groups             => BuildCloud::ASGroup,
-            :r53_record_sets       => BuildCloud::R53RecordSet,
-            :rds_servers           => BuildCloud::RDSServer,
-            :db_subnet_groups      => BuildCloud::DbSubnetGroup,
-            :db_parameter_groups   => BuildCloud::DbParameterGroup,
-            :cache_subnet_groups   => BuildCloud::CacheSubnetGroup,
-            :cache_clusters        => BuildCloud::CacheCluster,
+            :vpcs                   => BuildCloud::VPC,
+            :internet_gateways      => BuildCloud::InternetGateway,
+            :subnets                => BuildCloud::Subnet,
+            :route_tables           => BuildCloud::RouteTable,
+            :zones                  => BuildCloud::Zone,
+            :security_groups        => BuildCloud::SecurityGroup,
+            :network_interfaces     => BuildCloud::NetworkInterface,
+            :routes                 => BuildCloud::Route,
+            :launch_configurations  => BuildCloud::LaunchConfiguration,
+            :load_balancers         => BuildCloud::LoadBalancer,
+            :as_groups              => BuildCloud::ASGroup,
+            :r53_record_sets        => BuildCloud::R53RecordSet,
+            :rds_servers            => BuildCloud::RDSServer,
+            :db_subnet_groups       => BuildCloud::DbSubnetGroup,
+            :db_parameter_groups    => BuildCloud::DbParameterGroup,
+            :cache_subnet_groups    => BuildCloud::CacheSubnetGroup,
+            :cache_clusters         => BuildCloud::CacheCluster,
             :cache_parameter_groups => BuildCloud::CacheParameterGroup,
-            :iam_roles             => BuildCloud::IAMRole,
-            :s3_buckets            => BuildCloud::S3Bucket,
-            :instances             => BuildCloud::Instance,
-            :ebs_volumes           => BuildCloud::EBSVolume,
+            :iam_roles              => BuildCloud::IAMRole,
+            :s3_buckets             => BuildCloud::S3Bucket,
+            :instances              => BuildCloud::Instance,
+            :ebs_volumes            => BuildCloud::EBSVolume,
+            :dhcp_options_sets      => BuildCloud::DHCPOptionsSet,
         }
 
     end
 
     def self.create_order
         [
+            :dhcp_options_sets,
             :vpcs,
             :internet_gateways,
             :iam_roles,

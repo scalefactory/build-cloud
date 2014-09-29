@@ -42,6 +42,18 @@ class BuildCloud::R53RecordSet
 
         end
 
+        if network_interface_public_ip = options.delete(:network_interface_public_ip)
+
+            network_interface = BuildCloud::NetworkInterface.search( :name => network_interface_public_ip ).first
+
+            unless network_interface
+                raise "Can't find Network Interface ID #{network_interface_id} for Instance #{instance_public_ip}"
+            end
+
+            options[:value] = network_interface.read.association['publicIp']
+
+        end
+
         if rds_server = options.delete(:rds_server)
 
             rds = BuildCloud::RDSServer.search( :id => rds_server ).first
