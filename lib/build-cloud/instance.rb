@@ -157,7 +157,7 @@ class BuildCloud::Instance
             instance_state = instance.state
 
             begin
-                Timeout::timeout(30) {
+                Timeout::timeout(60) {
                     until instance_state == 'running'
                         @log.info( "instance not ready yet: #{instance_state}" )
                         sleep 3
