@@ -37,7 +37,10 @@ class BuildCloud
             if File.exists?( include_path )
                 @log.info( "Including YAML file #{include_path}" )
                 included_conf = YAML::load( File.open( include_path ) )
-                @config = @config.merge( included_conf )
+                @config = @config.merge(included_conf) do |keys, oldval, newval|
+                    (newval.is_a?(Array) ? (oldval + newval) : (oldval << newval)).uniq
+                end
+
             end
 
         end
