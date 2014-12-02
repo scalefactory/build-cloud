@@ -3,7 +3,6 @@ require 'yaml'
 require 'pry'
 require 'logger'
 require 'pp'
-require 'pathname'
 
 class BuildCloud
 
@@ -21,18 +20,25 @@ class BuildCloud
 
         @config = YAML::load( File.open( first_config_file ) )
 
-        include_files = options[:config]
+        cli_include_files = options[:config]
+
+        include_files = []
+
+        cli_include_files.each do |inc|
+            include_files << File.expand_path( inc, File.dirname( first_config_file))
+        end
+
         if include_yaml = @config.delete(:include)
             if include_yaml.is_a?(Array)
-                include_files.concat(include_yaml)
+                include_yaml.each do |yml|
+                    include_files << File.expand_path( yml, File.dirname( first_config_file))
+                end
             else
-                include_files.push(include_yaml)
+                include_files.push( File.expand_path( include_yaml, File.dirname( first_config_file))
             end
         end
         
         include_files.each do |include_file|
-
-            include_path = Pathname.new(File.join( File.dirname( first_config_file ), include_file)).realpath
 
             if File.exists?( include_path )
                 @log.info( "Including YAML file #{include_path}" )
