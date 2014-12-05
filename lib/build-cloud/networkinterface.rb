@@ -99,6 +99,11 @@ class BuildCloud::NetworkInterface
             @compute.associate_address(nil, ip.public_ip, interface.network_interface_id, allocation_id )
         end
 
+        unless options[:source_dest_check].nil?
+            ### Need to use the request here, since the model doesn't support the source_dest_check attribute
+            @compute.modify_network_interface_attribute(interface.network_interface_id, 'sourceDestCheck', options[:source_dest_check])
+        end
+
         @log.debug( interface.inspect )
         @log.debug( interface_tag.inspect )
         @log.debug( ip.inspect ) unless ! options[:assign_new_public_ip]
