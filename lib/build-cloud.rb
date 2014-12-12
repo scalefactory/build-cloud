@@ -15,30 +15,54 @@ class BuildCloud
 
         @log = options[:logger] or Logger.new( STDERR )
         @mock = options[:mock] or false
-        
-        first_config_file = options[:config].shift
 
+        # Parse the first config file. We'll merge the remainder (if any) into
+        # this one, regardless of whether they're passed on the command line
+        # or in the YAML for this file itself.
+        first_config_file = options[:config].shift
         @config = YAML::load( File.open( first_config_file ) )
 
-        cli_include_files = options[:config]
-
+        # include_files is going to be a list of files that we're going to
+        # merge in to the first file.
         include_files = []
 
+        # Work out the full, standardised pathnames for any further files
+        # specified on the command line.  note that options[:config] only
+        # contains the extra files at this point, as we shifted the first
+        # one off the array earlier.
+        #
+        # IMPORTANT: relative paths given on the command line are considered
+        # to be relative to $CWD. This decision is based on the principle of
+        # least surprise, as that is how everything else works.
+        cli_include_files = options[:config]
         cli_include_files.each do |inc|
-            include_files << File.expand_path( inc, File.dirname( first_config_file))
+            include_files << File.absolute_path( inc )
         end
 
+        # Now look in the :include key in the YAML of the first file for
+        # either a single, or an array of files to include. Work out the
+        # standardised paths for each of these files, and push them onto
+        # the include_files array.
+        #
+        # IMPORTANT: relative paths given in the :include key in the YAML
+        # are considered to be relative to the config file specified, not
+        # $CWD. This is to ensure consistency of application and backwards
+        # compatibility. If this were relative to $CWD, a relative path
+        # specified in the file could have different meanings, and would end
+        # up being unpredictable.
         if include_yaml = @config.delete(:include)
             if include_yaml.is_a?(Array)
+                # the :include key is an array, we need to iterate over it
                 include_yaml.each do |yml|
-                    include_files << File.expand_path( yml, File.dirname( first_config_file))
+                    include_files << File.expand_path( yml, File.dirname( File.absolute_path(first_config_file) ) )
                 end
             else
-                include_files.push( File.expand_path( include_yaml, File.dirname( first_config_file)) )
+                # the :include key is a scalar, so just standardise that path
+                include_files.push( File.expand_path( include_yaml, File.dirname( File.absolute_path(first_config_file) ) ) )
             end
         end
         
-        include_files.each do |include_file|
+        include_files.each do |include_path|
 
             if File.exists?( include_path )
                 @log.info( "Including YAML file #{include_path}" )
