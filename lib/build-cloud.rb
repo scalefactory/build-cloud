@@ -34,7 +34,7 @@ class BuildCloud
                     include_files << File.expand_path( yml, File.dirname( first_config_file))
                 end
             else
-                include_files.push( File.expand_path( include_yaml, File.dirname( first_config_file))
+                include_files.push( File.expand_path( include_yaml, File.dirname( first_config_file)) )
             end
         end
         
@@ -44,7 +44,7 @@ class BuildCloud
                 @log.info( "Including YAML file #{include_path}" )
                 included_conf = YAML::load( File.open( include_path ) )
                 @config = @config.merge(included_conf) do |keys, oldval, newval|
-                    (newval.is_a?(Array) ? (oldval + newval) : (oldval << newval)).uniq
+                    (newval.is_a?(Array) ? (oldval + newval).uniq : newval)
                 end
 
             end
