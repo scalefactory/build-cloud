@@ -68,7 +68,24 @@ class BuildCloud
                 @log.info( "Including YAML file #{include_path}" )
                 included_conf = YAML::load( File.open( include_path ) )
                 @config = @config.merge(included_conf) do |keys, oldval, newval|
+                    # we're iterating over elements that are in both the
+                    # config we've parsed so far, and the new file.
                     (newval.is_a?(Array) ? (oldval + newval).uniq : newval)
+                    # oldval is from the existing config, newval is the incoming
+                    # value from this file. if newval is an array, merge it in with
+                    # what we already have, and make it unique. if newval is a
+                    # string, the new value takes precedence over what we have
+                    # already.
+                    #
+                    # edge cases:
+                    # 1. if we have a key :foo which is a scalar, and then a
+                    # :foo in a subsequent file which is an array (or v.v.)
+                    # then this will blow up. I think this is acceptable.
+                    # 2. if we have, eg. an instance, defined twice in
+                    # separate files, then the behaviour of uniq is to use
+                    # the entire hash as a test for uniqueness. Therefore
+                    # if the definition of those instances varies slightly,
+                    # the attempt to create those instances will likely fail.
                 end
 
             end
