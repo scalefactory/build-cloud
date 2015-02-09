@@ -80,8 +80,6 @@ class BuildCloud::SecurityGroup
         
         security_group.ip_permissions.each do |r|
 
-            puts r.inspect
-            
             c = {
                 :min_port    => r['fromPort'],
                 :max_port    => r['toPort'],
