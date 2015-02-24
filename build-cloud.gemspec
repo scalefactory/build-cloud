@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "build-cloud"
-  spec.version       = "0.0.9"
+  spec.version       = "0.0.10"
   spec.authors       = ["The Scale Factory"]
   spec.email         = ["info@scalefactory.com"]
   spec.summary       = %q{Tools for building resources in AWS}
@@ -19,6 +19,6 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "bundler", "~> 1.5"
   spec.add_development_dependency "rake"
 
-  spec.add_dependency "fog", ">=1.22.0"
+  spec.add_dependency "fog-aws", "=0.1.0"
   spec.add_dependency "pry", ">=0.9.12.6"
 end

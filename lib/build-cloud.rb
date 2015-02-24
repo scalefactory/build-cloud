@@ -1,4 +1,4 @@
-require 'fog'
+require 'fog/aws'
 require 'yaml'
 require 'pry'
 require 'logger'
