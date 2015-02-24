@@ -77,6 +77,10 @@ class BuildCloud::SecurityGroup
         # Read all the existing rules from the SG object. Turn what we find into
         # a list of hashes, where the hash parameter names match those that we use
         # in the YAML description.  This will aid comparison of current vs. desired rules
+
+        @log.debug '**********************'
+        @log.debug security_group.ip_permissions
+        @log.debug '**********************'
         
         security_group.ip_permissions.each do |r|
 
@@ -86,17 +90,21 @@ class BuildCloud::SecurityGroup
                 :ip_protocol => r['ipProtocol'],
             }
 
-            if r['groups'] != []
-                c[:name] = @compute.security_groups.select { |sg| sg.group_id == r['groups'].first['groupId'] }.first.name
+            r['groups'].each do |g|
+                this_c = c.dup
+                this_c[:name] = @compute.security_groups.select { |sg| sg.group_id == g['groupId'] }.first.name
+                current_rules << this_c
             end
 
-            if r['ipRanges'] != []
-                c[:cidr_ip] = r['ipRanges'].first['cidrIp']
+            r['ipRanges'].each do |r|
+                this_c = c.dup
+                this_c[:cidr_ip] = r['cidrIp']
+                current_rules << this_c
             end
-
-            current_rules << c
 
         end
+
+        @log.debug current_rules.inspect
 
         # Work through the list of desired rules.
 
