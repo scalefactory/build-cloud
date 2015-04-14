@@ -22,6 +22,8 @@ See the command line help for `build-cloud`.
 
 ## Changelog
 
+2015-04-14 - version 0.0.10 - adds "lifecycle" functionality for security groups. Existing security groups will now have rules removed from them or added to them to make AWS reflect the YAML passed to build-cloud. Previously, once a security group had been created by build-cloud, it was never subsequently updated.
+
 2014-12-12 - version 0.0.9 - bugfixes to file path resolution. It is worth noting that when multiple files are passed to `--config` they're treated as relative to the CWD - this is what you'd expect from referencing a file in a command line option. When file(s) are specified in an `:include` key in the given YAML file, relative paths given there are considered to be relative to the location of the YAML file given to `--config` - this is to ensure consistent behaviour regardless of what $CWD is when calling build-cloud.
 
 2014-12-01 - version 0.0.8 - when multiple files are passed to `--config`, any top-level elements in the second and subsequent files which are arrays are merged into the arrays from previously read in files. This means, for examples, that you can have lists of instances or security groups in multiple files, and they will all be read in. Previously, subsequent files overwrote what was in previous files. Note that this only applies for top level elements of YAML files which are arrays - the previous overwriting behaviour applies still to strings.
