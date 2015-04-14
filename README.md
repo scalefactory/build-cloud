@@ -1,6 +1,6 @@
 # Build::Cloud
 
-Tools for building resources in AWS}
+Tools for building resources in AWS
 
 ## Installation
 
@@ -21,6 +21,12 @@ Or install it yourself as:
 See the command line help for `build-cloud`.
 
 ## Changelog
+
+2014-12-12 - version 0.0.9 - bugfixes to file path resolution. It is worth noting that when multiple files are passed to `--config` they're treated as relative to the CWD - this is what you'd expect from referencing a file in a command line option. When file(s) are specified in an `:include` key in the given YAML file, relative paths given there are considered to be relative to the location of the YAML file given to `--config` - this is to ensure consistent behaviour regardless of what $CWD is when calling build-cloud.
+
+2014-12-01 - version 0.0.8 - when multiple files are passed to `--config`, any top-level elements in the second and subsequent files which are arrays are merged into the arrays from previously read in files. This means, for examples, that you can have lists of instances or security groups in multiple files, and they will all be read in. Previously, subsequent files overwrote what was in previous files. Note that this only applies for top level elements of YAML files which are arrays - the previous overwriting behaviour applies still to strings.
+
+2014-10-03 - version 0.0.7 - instance creation previously had a 30 second wait to transition from pending to running state. This was insufficient, and has been increased to 60 seconds.
 
 2014-09-23 - version 0.0.6 - correctly name tags VPCs, and now allows you to refer to the public IP of a network interface (via `:network_interface_public_ip` in a Route 53 record set.
 

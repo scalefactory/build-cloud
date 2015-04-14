@@ -15,33 +15,79 @@ class BuildCloud
 
         @log = options[:logger] or Logger.new( STDERR )
         @mock = options[:mock] or false
-        
-        first_config_file = options[:config].shift
 
+        # Parse the first config file. We'll merge the remainder (if any) into
+        # this one, regardless of whether they're passed on the command line
+        # or in the YAML for this file itself.
+        first_config_file = options[:config].shift
         @config = YAML::load( File.open( first_config_file ) )
 
-        include_files = options[:config]
+        # include_files is going to be a list of files that we're going to
+        # merge in to the first file.
+        include_files = []
+
+        # Work out the full, standardised pathnames for any further files
+        # specified on the command line.  note that options[:config] only
+        # contains the extra files at this point, as we shifted the first
+        # one off the array earlier.
+        #
+        # IMPORTANT: relative paths given on the command line are considered
+        # to be relative to $CWD. This decision is based on the principle of
+        # least surprise, as that is how everything else works.
+        cli_include_files = options[:config]
+        cli_include_files.each do |inc|
+            include_files << File.absolute_path( inc )
+        end
+
+        # Now look in the :include key in the YAML of the first file for
+        # either a single, or an array of files to include. Work out the
+        # standardised paths for each of these files, and push them onto
+        # the include_files array.
+        #
+        # IMPORTANT: relative paths given in the :include key in the YAML
+        # are considered to be relative to the config file specified, not
+        # $CWD. This is to ensure consistency of application and backwards
+        # compatibility. If this were relative to $CWD, a relative path
+        # specified in the file could have different meanings, and would end
+        # up being unpredictable.
         if include_yaml = @config.delete(:include)
             if include_yaml.is_a?(Array)
-                include_files.concat(include_yaml)
+                # the :include key is an array, we need to iterate over it
+                include_yaml.each do |yml|
+                    include_files << File.expand_path( yml, File.dirname( File.absolute_path(first_config_file) ) )
+                end
             else
-                include_files.push(include_yaml)
+                # the :include key is a scalar, so just standardise that path
+                include_files.push( File.expand_path( include_yaml, File.dirname( File.absolute_path(first_config_file) ) ) )
             end
         end
         
-        include_files.each do |include_file|
-
-            include_path = ''
-            if include_file.include? '/'
-                include_path = include_file
-            else
-                include_path = File.join( File.dirname( first_config_file ), include_file)
-            end
+        include_files.each do |include_path|
 
             if File.exists?( include_path )
                 @log.info( "Including YAML file #{include_path}" )
                 included_conf = YAML::load( File.open( include_path ) )
-                @config = @config.merge( included_conf )
+                @config = @config.merge(included_conf) do |keys, oldval, newval|
+                    # we're iterating over elements that are in both the
+                    # config we've parsed so far, and the new file.
+                    (newval.is_a?(Array) ? (oldval + newval).uniq : newval)
+                    # oldval is from the existing config, newval is the incoming
+                    # value from this file. if newval is an array, merge it in with
+                    # what we already have, and make it unique. if newval is a
+                    # string, the new value takes precedence over what we have
+                    # already.
+                    #
+                    # edge cases:
+                    # 1. if we have a key :foo which is a scalar, and then a
+                    # :foo in a subsequent file which is an array (or v.v.)
+                    # then this will blow up. I think this is acceptable.
+                    # 2. if we have, eg. an instance, defined twice in
+                    # separate files, then the behaviour of uniq is to use
+                    # the entire hash as a test for uniqueness. Therefore
+                    # if the definition of those instances varies slightly,
+                    # the attempt to create those instances will likely fail.
+                end
+
             end
 
         end
