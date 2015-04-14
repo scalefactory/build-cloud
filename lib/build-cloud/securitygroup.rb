@@ -80,21 +80,35 @@ class BuildCloud::SecurityGroup
         
         security_group.ip_permissions.each do |r|
 
-            c = {
-                :min_port    => r['fromPort'],
-                :max_port    => r['toPort'],
-                :ip_protocol => r['ipProtocol'],
-            }
-
             if r['groups'] != []
-                c[:name] = @compute.security_groups.select { |sg| sg.group_id == r['groups'].first['groupId'] }.first.name
+
+                    c = {
+                        :min_port    => r['fromPort'],
+                        :max_port    => r['toPort'],
+                        :ip_protocol => r['ipProtocol'],
+                        :name        => @compute.security_groups.select { |sg| sg.group_id == r['groups'].first['groupId'] }.first.name,
+                    }
+
+                    current_rules << c
+
             end
 
             if r['ipRanges'] != []
-                c[:cidr_ip] = r['ipRanges'].first['cidrIp']
-            end
 
-            current_rules << c
+                r['ipRanges'].each do |ipRange|
+
+                    c = {
+                        :min_port    => r['fromPort'],
+                        :max_port    => r['toPort'],
+                        :ip_protocol => r['ipProtocol'],
+                        :cidr_ip     => ipRange['cidrIp'],
+                    }
+
+                    current_rules << c
+
+                end
+
+            end
 
         end
 
