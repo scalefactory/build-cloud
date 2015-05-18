@@ -245,11 +245,12 @@ class BuildCloud
 
         @mock and Fog.mock!
 
-        fog_options = {
+        fog_options_regionless = {
             :aws_access_key_id     => @config[:aws_access_key_id] ||= ENV['AWS_ACCESS_KEY'],
             :aws_secret_access_key => @config[:aws_secret_access_key] ||= ENV['AWS_SECRET_KEY'],
-            :region                => @config[:aws_region],
         }
+
+        fog_options = fog_options_regionless.merge( { :region => @config[:aws_region] } )
 
         @fog_interfaces = {
 
@@ -257,14 +258,10 @@ class BuildCloud
             :s3          => Fog::Storage::AWS.new( fog_options ),
             :as          => Fog::AWS::AutoScaling.new( fog_options ),
             :elb         => Fog::AWS::ELB.new( fog_options ),
-            :iam         => Fog::AWS::IAM.new( fog_options ),
+            :iam         => Fog::AWS::IAM.new( fog_options_regionless ),
             :rds         => Fog::AWS::RDS.new( fog_options ),
             :elasticache => Fog::AWS::Elasticache.new( fog_options ),
-            :r53         => Fog::DNS::AWS.new(
-                :aws_access_key_id     => @config[:aws_access_key_id] ||= ENV['AWS_ACCESS_KEY'],
-                :aws_secret_access_key => @config[:aws_secret_access_key] ||= ENV['AWS_SECRET_KEY'],
-            )
-
+            :r53         => Fog::DNS::AWS.new( fog_options_regionless ) 
         }
 
     end
