@@ -36,6 +36,8 @@ class BuildCloud::IAMRole
 
         @log.debug( role.inspect )
 
+        @iam.create_instance_profile( @options[:rolename] )
+
         policies.each do |policy|
 
             @log.debug( "Adding policy #{policy}" )
@@ -45,10 +47,9 @@ class BuildCloud::IAMRole
             @iam.put_role_policy( @options[:rolename], policy[:policy_name],
                 policy_document )
 
-            @iam.create_instance_profile( @options[:rolename] )
-            @iam.add_role_to_instance_profile( @options[:rolename], @options[:rolename] )
-
         end
+
+        @iam.add_role_to_instance_profile( @options[:rolename], @options[:rolename] )
 
     end
 
