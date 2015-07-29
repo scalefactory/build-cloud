@@ -34,9 +34,10 @@ require 'build-cloud/dhcpoptionsset'
 options = {}
 optparse = OptionParser.new do |opts|
 
-    options[:config] = nil
+    options[:config] = []
     opts.on('-c', '--config file1,file2', Array, 'Config files - second and subsequent files merged into first.') do |c|
-        options[:config] = c
+        options[:config] << c
+        options[:config].flatten!
     end
 
     options[:debug] = false
@@ -92,7 +93,7 @@ begin
 
     optparse.parse!
 
-    if options[:config].nil?
+    if options[:config].empty?
         raise OptionParser::MissingArgument, "--config"
     end
 
