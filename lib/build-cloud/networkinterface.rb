@@ -66,16 +66,22 @@ class BuildCloud::NetworkInterface
         options[:description] = options[:name]
         options.delete(:name)
 
+        tags = options[:tags]
+        options.delete(:tags)
+
         interface = @compute.network_interfaces.new(options)
         interface.save
         wait_until_ready
 
-        attributes = {}
-        attributes[:resource_id] = interface.network_interface_id
-        attributes[:key] = 'Name'
-        attributes[:value] = options[:description]
-        interface_tag = @compute.tags.new( attributes )
-        interface_tag.save
+        tags.merge!({'Name' => options[:description]})
+        tags.each do |k,v|
+            attributes = {}
+            attributes[:resource_id] = interface.network_interface_id
+            attributes[:key] = k
+            attributes[:value] = v
+            interface_tag = @compute.tags.new(attributes)
+            interface_tag.save
+        end
 
         if options[:assign_new_public_ip] and ! options[:existing_public_ip].nil?
             raise "Cannot specifiy both new and existing IP addresses"
@@ -105,7 +111,6 @@ class BuildCloud::NetworkInterface
         end
 
         @log.debug( interface.inspect )
-        @log.debug( interface_tag.inspect )
         @log.debug( ip.inspect ) unless ! options[:assign_new_public_ip]
         @log.debug( ip.inspect ) unless options[:existing_public_ip].nil?
 
