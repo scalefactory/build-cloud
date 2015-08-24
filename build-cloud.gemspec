@@ -4,7 +4,7 @@ $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 
 Gem::Specification.new do |spec|
   spec.name          = "build-cloud"
-  spec.version       = "0.0.11"
+  spec.version       = "0.0.12"
   spec.authors       = ["The Scale Factory"]
   spec.email         = ["info@scalefactory.com"]
   spec.summary       = %q{Tools for building resources in AWS}

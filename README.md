@@ -22,6 +22,10 @@ See the command line help for `build-cloud`.
 
 ## Changelog
 
+2015-08-24 - version 0.0.12 - adds support for tagging network interfaces, permits multiple config files to be passed on the commandline, fixes a bug with S3 buckets named to contain dots.
+
+2015-05-18 - version 0.0.11 - fixed problems with IAM roles
+
 2015-04-14 - version 0.0.10 - adds "lifecycle" functionality for security groups. Existing security groups will now have rules removed from them or added to them to make AWS reflect the YAML passed to build-cloud. Previously, once a security group had been created by build-cloud, it was never subsequently updated.
 
 2014-12-12 - version 0.0.9 - bugfixes to file path resolution. It is worth noting that when multiple files are passed to `--config` they're treated as relative to the CWD - this is what you'd expect from referencing a file in a command line option. When file(s) are specified in an `:include` key in the given YAML file, relative paths given there are considered to be relative to the location of the YAML file given to `--config` - this is to ensure consistent behaviour regardless of what $CWD is when calling build-cloud.
