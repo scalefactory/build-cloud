@@ -255,7 +255,7 @@ class BuildCloud
         @fog_interfaces = {
 
             :compute     => Fog::Compute::AWS.new( fog_options ),
-            :s3          => Fog::Storage::AWS.new( fog_options ),
+            :s3          => Fog::Storage::AWS.new( fog_options.merge(:path_style => true)),
             :as          => Fog::AWS::AutoScaling.new( fog_options ),
             :elb         => Fog::AWS::ELB.new( fog_options ),
             :iam         => Fog::AWS::IAM.new( fog_options_regionless ),
