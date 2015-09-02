@@ -66,7 +66,7 @@ class BuildCloud::NetworkInterface
         options[:description] = options[:name]
         options.delete(:name)
 
-        tags = options[:tags]
+        tags = options[:tags] || {}
         options.delete(:tags)
 
         interface = @compute.network_interfaces.new(options)
