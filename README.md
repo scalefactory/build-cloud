@@ -22,6 +22,8 @@ See the command line help for `build-cloud`.
 
 ## Changelog
 
+2015-09-02 - version 0.0.13 - use the same environment variables as AWS SDKs for credentials
+
 2015-08-24 - version 0.0.12 - adds support for tagging network interfaces, permits multiple config files to be passed on the commandline, fixes a bug with S3 buckets named to contain dots.
 
 2015-05-18 - version 0.0.11 - fixed problems with IAM roles
