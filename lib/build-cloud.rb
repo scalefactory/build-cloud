@@ -61,7 +61,7 @@ class BuildCloud
                 include_files.push( File.expand_path( include_yaml, File.dirname( File.absolute_path(first_config_file) ) ) )
             end
         end
-        
+
         include_files.each do |include_path|
 
             if File.exists?( include_path )
@@ -201,7 +201,7 @@ class BuildCloud
     def self.search( type, options )
         BuildCloud::dispatch[type].search(options)
     end
-    
+
     def recursive_interpolate_config(h)
 
         # Work through the given config replacing all strings matching
@@ -228,7 +228,7 @@ class BuildCloud
                 else
                     raise "Attempt to interpolate with non-existant key '#{var}'"
                 end
-                
+
                 h.gsub!(/%\{#{var}\}/, val)
 
             end
@@ -246,8 +246,8 @@ class BuildCloud
         @mock and Fog.mock!
 
         fog_options_regionless = {
-            :aws_access_key_id     => @config[:aws_access_key_id] ||= ENV['AWS_ACCESS_KEY'],
-            :aws_secret_access_key => @config[:aws_secret_access_key] ||= ENV['AWS_SECRET_KEY'],
+            :aws_access_key_id     => @config[:aws_access_key_id] ||= ENV['AWS_ACCESS_KEY_ID'],
+            :aws_secret_access_key => @config[:aws_secret_access_key] ||= ENV['AWS_SECRET_ACCESS_KEY'],
         }
 
         fog_options = fog_options_regionless.merge( { :region => @config[:aws_region] } )
@@ -261,10 +261,9 @@ class BuildCloud
             :iam         => Fog::AWS::IAM.new( fog_options_regionless ),
             :rds         => Fog::AWS::RDS.new( fog_options ),
             :elasticache => Fog::AWS::Elasticache.new( fog_options ),
-            :r53         => Fog::DNS::AWS.new( fog_options_regionless ) 
+            :r53         => Fog::DNS::AWS.new( fog_options_regionless )
         }
 
     end
 
 end
-
