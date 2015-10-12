@@ -207,6 +207,9 @@ class BuildCloud
         # Work through the given config replacing all strings matching
         # %{..x..} by looking up ..x.. in the existing @config hash and
         # substituting the template with the value
+        #
+        # If ..x.. is of the form variable||default, if the given key is
+        # not defined anywhere, the default will be used.
 
         case h
         when Hash
@@ -219,17 +222,15 @@ class BuildCloud
             h.map { |v| recursive_interpolate_config(v) }
         when String
 
-            while h =~ /%\{(.+?)\}/
-                var = $1
-                val = ""
+            while /%\{(?<var>[^\|\}]*)(?:\|{2}(?<default>[^\}]*))?\}/ =~ h
 
-                if @config.has_key?(var.to_sym)
-                    val = @config[var.to_sym]
-                else
-                    raise "Attempt to interpolate with non-existant key '#{var}'"
-                end
+                # $& is the whole matched expression above, $MATCH when using English
+                exp = $&
 
-                h.gsub!(/%\{#{var}\}/, val)
+                val = @config.fetch(var.to_sym, default)
+                raise "Attempt to interpolate with non-existant key '#{var}' with no default value set" if val.nil?
+
+                h.gsub!(exp, val)
 
             end
 
