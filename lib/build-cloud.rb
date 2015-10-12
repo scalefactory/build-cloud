@@ -222,7 +222,7 @@ class BuildCloud
             h.map { |v| recursive_interpolate_config(v) }
         when String
 
-            while /%\{(?<var>[^\|\}?]*)(?:\|{2}(?<default>[^\}]*))?\}/ =~ h
+            while /%\{(?<var>[^\|\}]*)(?:\|{2}(?<default>[^\}]*))?\}/ =~ h
 
                 exp = $&
                 val = ""
