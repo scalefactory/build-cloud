@@ -225,17 +225,9 @@ class BuildCloud
             while /%\{(?<var>[^\|\}]*)(?:\|{2}(?<default>[^\}]*))?\}/ =~ h
 
                 exp = $&
-                val = ""
 
-                if @config.has_key?(var.to_sym)
-                    val = @config[var.to_sym]
-                else
-                    if default.empty?
-                        raise "Attempt to interpolate with non-existant key '#{var}' with no default value set"
-                    else
-                        val = default
-                    end
-                end
+                val = @config.fetch(var.to_sym, default)
+                raise "Attempt to interpolate with non-existant key '#{var}' with no default value set" if val.nil?
 
                 h.gsub!(exp, val)
 
