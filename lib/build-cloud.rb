@@ -222,32 +222,22 @@ class BuildCloud
             h.map { |v| recursive_interpolate_config(v) }
         when String
 
-            while h =~ /%\{(.+?)\}/
-                exp = $1
+            while /%\{(?<var>[^\|\}?]*)(?:\|{2}(?<default>[^\}]*))?\}/ =~ h
 
-                var = ""
+                exp = $&
                 val = ""
-                default = ""
-
-                if exp =~ /\|\|/
-                    (var, default) = exp.split('||')
-                else
-                    var = exp
-                end
 
                 if @config.has_key?(var.to_sym)
                     val = @config[var.to_sym]
                 else
-                    if default.nil?
-                        raise "Non-existent key '#{var}' supplied and default not defined after ||"
-                    elsif default.empty?
-                        raise "Attempt to interpolate with non-existant key '#{var}'"
+                    if default.empty?
+                        raise "Attempt to interpolate with non-existant key '#{var}' with no default value set"
                     else
                         val = default
                     end
                 end
 
-                h.gsub!(/%\{#{Regexp.escape(exp)}\}/, val)
+                h.gsub!(exp, val)
 
             end
 
