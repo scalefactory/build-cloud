@@ -22,6 +22,8 @@ See the command line help for `build-cloud`.
 
 ## Changelog
 
+2015-10-12 - version 0.0.14 - now allows defaults in interpolated variables, if the variable doesn't exist. Format is `%{variablename||default}` eg. `%{node_instance_type||t2.large}`
+
 2015-09-02 - version 0.0.13 - use the same environment variables as AWS SDKs for credentials
 
 2015-08-24 - version 0.0.12 - adds support for tagging network interfaces, permits multiple config files to be passed on the commandline, fixes a bug with S3 buckets named to contain dots.
