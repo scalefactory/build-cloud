@@ -207,6 +207,9 @@ class BuildCloud
         # Work through the given config replacing all strings matching
         # %{..x..} by looking up ..x.. in the existing @config hash and
         # substituting the template with the value
+        #
+        # If ..x.. is of the form variable||default, if the given key is
+        # not defined anywhere, the default will be used.
 
         case h
         when Hash
@@ -220,16 +223,31 @@ class BuildCloud
         when String
 
             while h =~ /%\{(.+?)\}/
-                var = $1
+                exp = $1
+
+                var = ""
                 val = ""
+                default = ""
+
+                if exp =~ /\|\|/
+                    (var, default) = exp.split('||')
+                else
+                    var = exp
+                end
 
                 if @config.has_key?(var.to_sym)
                     val = @config[var.to_sym]
                 else
-                    raise "Attempt to interpolate with non-existant key '#{var}'"
+                    if default.nil?
+                        raise "Non-existent key '#{var}' supplied and default not defined after ||"
+                    elsif default.empty?
+                        raise "Attempt to interpolate with non-existant key '#{var}'"
+                    else
+                        val = default
+                    end
                 end
 
-                h.gsub!(/%\{#{var}\}/, val)
+                h.gsub!(/%\{#{Regexp.escape(exp)}\}/, val)
 
             end
 
