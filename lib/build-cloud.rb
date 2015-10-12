@@ -224,6 +224,7 @@ class BuildCloud
 
             while /%\{(?<var>[^\|\}]*)(?:\|{2}(?<default>[^\}]*))?\}/ =~ h
 
+                # $& is the whole matched expression above, $MATCH when using English
                 exp = $&
 
                 val = @config.fetch(var.to_sym, default)
