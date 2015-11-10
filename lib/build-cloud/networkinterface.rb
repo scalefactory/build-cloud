@@ -30,7 +30,7 @@ class BuildCloud::NetworkInterface
 
         @log.debug( options.inspect )
 
-        required_options(:name, :private_ip_address)
+        required_options(:name)
         require_one_of(:subnet_id, :subnet_name)
         require_one_of(:security_groups, :security_group_names)
 
