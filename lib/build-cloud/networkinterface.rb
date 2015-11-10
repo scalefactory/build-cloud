@@ -30,7 +30,7 @@ class BuildCloud::NetworkInterface
 
         @log.debug( options.inspect )
 
-        required_options(:name, :private_ip_address)
+        required_options(:name)
         require_one_of(:subnet_id, :subnet_name)
         require_one_of(:security_groups, :security_group_names)
 
@@ -40,7 +40,7 @@ class BuildCloud::NetworkInterface
         
         return if exists?
 
-        @log.info( "Creating network interface #{@options[:private_ip_address]}" )
+        @log.info( "Creating network interface #{@options[:name]}" )
 
         options = @options.dup
 
@@ -117,7 +117,7 @@ class BuildCloud::NetworkInterface
     end
 
     def read
-        @compute.network_interfaces.select { |ni| ni.private_ip_address == @options[:private_ip_address]}.first
+        @compute.network_interfaces.select { |ni| ni.description == @options[:name]}.first
     end
 
     alias_method :fog_object, :read
@@ -126,7 +126,7 @@ class BuildCloud::NetworkInterface
 
         return unless exists?
 
-        @log.info( "Deleting network interface with IP address #{@options[:private_ip_address]}" )
+        @log.info( "Deleting network interface #{@options[:name]}" )
 
         fog_object.destroy
 
