@@ -82,14 +82,18 @@ class BuildCloud::SecurityGroup
 
             if r['groups'] != []
 
+                r['groups'].each do |group|
+
                     c = {
                         :min_port    => r['fromPort'],
                         :max_port    => r['toPort'],
                         :ip_protocol => r['ipProtocol'],
-                        :name        => @compute.security_groups.select { |sg| sg.group_id == r['groups'].first['groupId'] }.first.name,
+                        :name        => @compute.security_groups.select { |sg| sg.group_id == group['groupId'] }.first.name,
                     }
 
                     current_rules << c
+
+                end
 
             end
 
