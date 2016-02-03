@@ -1,5 +1,7 @@
 # Changelog
 
+2016-02-02 - version 0.0.16 - fix bug which prevented security groups containing multiple references to other security groups being updated
+
 2015-11-10 - version 0.0.15 - allow private_ip to be optional when creating an ENI
 
 2015-10-12 - version 0.0.14 - now allows defaults in interpolated variables, if the variable doesn't exist. Format is `%{variablename||default}` eg. `%{node_instance_type||t2.large}`
