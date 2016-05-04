@@ -43,6 +43,11 @@ class BuildCloud::ASGroup
 
         asg = @as.groups.new( options )
         asg.save
+        
+        if options[:enabled_metrics]
+           @log.debug( 'metrics enabled')
+           asg.enable_metrics_collection('1Minute', options[:enable_metrics])
+        end
 
         @log.debug( asg.inspect )
 
@@ -65,4 +70,3 @@ class BuildCloud::ASGroup
     end
 
 end
-

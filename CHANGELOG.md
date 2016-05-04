@@ -1,5 +1,7 @@
 # Changelog
 
+2016-05-04 - version 0.0.17 - allow metrics to be enabled on an asg when it's created
+
 2016-02-02 - version 0.0.16 - fix bug which prevented security groups containing multiple references to other security groups being updated
 
 2015-11-10 - version 0.0.15 - allow private_ip to be optional when creating an ENI
