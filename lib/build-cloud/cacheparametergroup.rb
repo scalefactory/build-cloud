@@ -29,12 +29,7 @@ class BuildCloud::CacheParameterGroup
 
         @log.debug( param_group.inspect )
 
-        params = @elasticache.modify_cache_parameter_group options[:id], options[:params].collect! { |c| 
-            {
-                'ParameterName' => c[:param_name],
-                'ParameterValue' => c[:param_value],
-            }
-        }
+        params = @elasticache.modify_cache_parameter_group options[:id], options[:params]
 
         @log.debug( params.inspect )
 
