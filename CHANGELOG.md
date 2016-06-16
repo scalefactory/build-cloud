@@ -1,5 +1,7 @@
 # Changelog
 
+2016-06-16 - version 0.0.18 - fix cache parameter group creation for elasticache
+
 2016-05-04 - version 0.0.17 - allow metrics to be enabled on an asg when it's created
 
 2016-02-02 - version 0.0.16 - fix bug which prevented security groups containing multiple references to other security groups being updated
