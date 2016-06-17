@@ -166,6 +166,7 @@ class BuildCloud
             :instances              => BuildCloud::Instance,
             :ebs_volumes            => BuildCloud::EBSVolume,
             :dhcp_options_sets      => BuildCloud::DHCPOptionsSet,
+            :sqs_queues             => BuildCloud::SQSQueue,
         }
 
     end
@@ -193,6 +194,7 @@ class BuildCloud
             :as_groups,
             :r53_record_sets,
             :s3_buckets,
+            :sqs_queues,
             :ebs_volumes,
             :instances,
         ]
@@ -262,7 +264,8 @@ class BuildCloud
             :iam         => Fog::AWS::IAM.new( fog_options_regionless ),
             :rds         => Fog::AWS::RDS.new( fog_options ),
             :elasticache => Fog::AWS::Elasticache.new( fog_options ),
-            :r53         => Fog::DNS::AWS.new( fog_options_regionless )
+            :r53         => Fog::DNS::AWS.new( fog_options_regionless ),
+            :sqs         => Fog::AWS::SQS.new( fog_options )
         }
 
     end

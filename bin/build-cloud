@@ -29,6 +29,7 @@ require 'build-cloud/ebsvolume'
 require 'build-cloud/networkinterface'
 require 'build-cloud/internetgateway'
 require 'build-cloud/dhcpoptionsset'
+require 'build-cloud/sqsqueue'
 
 
 options = {}
@@ -182,4 +183,3 @@ end
 if options[:pry]
     inf.pry
 end
-
