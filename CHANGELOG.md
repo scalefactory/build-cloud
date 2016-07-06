@@ -1,5 +1,6 @@
 # Changelog
 
+2016-07-06 - Add support for creating and deleting custom Managed Policies
 2016-07-06 - Improve IAM role support, now removes and updates role policies if they change/removed
 
 2016-06-17 - version 0.0.19 - add sqs support
