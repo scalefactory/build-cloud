@@ -125,7 +125,7 @@ class BuildCloud::IAMRole
 
         current_policies.each do |p|
 
-            @log.debug( "Revoking superfluous #{p.inspect}" )
+            @log.debug( "Removing policy #{p.inspect}" )
             @log.info( "For role #{iam_role.rolename} removing policy #{p[:policy_name]}" )
             @iam.delete_role_policy(iam_role.rolename, p[:policy_name])
 
