@@ -85,7 +85,7 @@ class BuildCloud::IAMRole
             
             # Assume adding policy
             pa = {
-                :policy_document => p[:policy_document],
+                :policy_document => JSON.parse(p[:policy_document]),
                 :policy_name     => p[:policy_name],
             }
 
@@ -101,12 +101,12 @@ class BuildCloud::IAMRole
                     # Remove from the policies to add if the policy documents match
                     policies_to_add.delete_if do |a|
                         if (c[:policy_name] == a[:policy_name]) and
-                           (c[:policy_document] == JSON.parse(a[:policy_document]))
+                           (c[:policy_document] == a[:policy_document])
                             @log.debug("#{p[:policy_name]} is a match" )
                             true
                         else
                             @log.debug("#{p[:policy_name]} is different" )
-                            @log.debug("new policy is '#{JSON.parse(p[:policy_document])}'")
+                            @log.debug("new policy is '#{a[:policy_document]}'")
                             @log.debug("current policy is '#{c[:policy_document]}'")
                             false
                         end
@@ -135,10 +135,7 @@ class BuildCloud::IAMRole
 
             @log.debug( "For role #{iam_role.rolename} adding/updating policy #{p}" )
             @log.info( "For role #{iam_role.rolename} adding/updating policy #{p[:policy_name]}" )
-
-            policy_document = JSON.parse( p[:policy_document] )
-
-            @iam.put_role_policy( iam_role.rolename, p[:policy_name], policy_document )
+            @iam.put_role_policy( iam_role.rolename, p[:policy_name], p[:policy_document] )
 
         end
 
