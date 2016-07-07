@@ -53,9 +53,9 @@ class BuildCloud::IAMRole
     
     def rationalise_policies( policies )
 
-        return if policies.empty?
-
-        iam_role = read
+        if policies.nil?
+            policies = {}
+        end
 
         current_policies = []
         policies_to_add  = []
@@ -64,14 +64,14 @@ class BuildCloud::IAMRole
         # a list of hashes, where the hash parameter names match those that we use
         # in the YAML description.  This will aid comparison of current vs. desired policies
 
-        policy_names = @iam.list_role_policies(iam_role.rolename).body["PolicyNames"]
+        policy_names = @iam.list_role_policies(fog_object.rolename).body["PolicyNames"]
         
         unless policy_names.nil? 
 
             policy_names.each do |policy_name|
 
                 c = {
-                    :policy_document => @iam.get_role_policy(iam_role.rolename, policy_name).body["Policy"]["PolicyDocument"],
+                    :policy_document => @iam.get_role_policy(fog_object.rolename, policy_name).body["Policy"]["PolicyDocument"],
                     :policy_name     => policy_name,
                 }
 
@@ -81,7 +81,7 @@ class BuildCloud::IAMRole
         end
         
         policies.each do |p|
-            @log.debug("For role #{iam_role.rolename} checking policy #{p[:policy_name]}")
+            @log.debug("For role #{fog_object.rolename} checking policy #{p[:policy_name]}")
             
             # Assume adding policy
             pa = {
@@ -126,16 +126,16 @@ class BuildCloud::IAMRole
         current_policies.each do |p|
 
             @log.debug( "Removing policy #{p.inspect}" )
-            @log.info( "For role #{iam_role.rolename} removing policy #{p[:policy_name]}" )
-            @iam.delete_role_policy(iam_role.rolename, p[:policy_name])
+            @log.info( "For role #{fog_object.rolename} removing policy #{p[:policy_name]}" )
+            @iam.delete_role_policy(fog_object.rolename, p[:policy_name])
 
         end
 
         policies_to_add.each do |p|
 
-            @log.debug( "For role #{iam_role.rolename} adding/updating policy #{p}" )
-            @log.info( "For role #{iam_role.rolename} adding/updating policy #{p[:policy_name]}" )
-            @iam.put_role_policy( iam_role.rolename, p[:policy_name], p[:policy_document] )
+            @log.debug( "For role #{fog_object.rolename} adding/updating policy #{p}" )
+            @log.info( "For role #{fog_object.rolename} adding/updating policy #{p[:policy_name]}" )
+            @iam.put_role_policy( fog_object.rolename, p[:policy_name], p[:policy_document] )
 
         end
 
