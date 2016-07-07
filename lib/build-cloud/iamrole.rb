@@ -60,7 +60,7 @@ class BuildCloud::IAMRole
         current_policies = []
         policies_to_add  = []
 
-        # Read all the existing policies from the SG object. Turn what we find into
+        # Read all the existing policies from the role object. Turn what we find into
         # a list of hashes, where the hash parameter names match those that we use
         # in the YAML description.  This will aid comparison of current vs. desired policies
 
@@ -121,7 +121,6 @@ class BuildCloud::IAMRole
         # At the end of this loop, anything left in the current_policies list
         # represents a policy that's present on the infra, but should be deleted
         # (since there's no matching desired policy), so delete those.
-        # Changing a rule maps to "delete old rule, create new one".
 
         current_policies.each do |p|
 
