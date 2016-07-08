@@ -20,14 +20,12 @@ class BuildCloud::IAMUser
 
     def create
         
-        #create user if it doesn't exist
-        
         policies = @options.delete(:policies)
         groups = @options.delete(:groups)
         
         unless exists?
 
-            @log.info( "Creating new IAM user for #{@options[:id]}" )
+            @log.info( "Creating new IAM user #{@options[:id]}" )
 
             user = @iam.users.new( @options )
             user.save
@@ -39,16 +37,13 @@ class BuildCloud::IAMUser
         
         @log.debug("User is : #{user.inspect}")
         
-        # Policies are also created in iampolicy and attached to users/groups there
         #if there are :policies: attach and remove any not listed
         # if a policy is managed then it requires an arn, and to be created under :iam_managed_policies:
         # or amazons policy arns
         # if a policy is a user one, then it needs :name: and :document:
         rationalise_policies( policies )
         
-        # Groups are created in iampolicy and attached to users/groups there
-        # if there are :groups: attach, remove any not listed
-        rationalise_groups( groups )
+        # Users are added to groups under :iam_groups:
 
     end
     
@@ -162,68 +157,6 @@ class BuildCloud::IAMUser
         end
         
     end
-    
-    def rationalise_groups( groups )
-
-        groups = {} if groups.nil?
-
-        user_groups_to_add  = []
-        current_user_groups = []
-        
-        fog_object.groups.each do |g|
-            current_user_groups << { :name => g.name}
-        end
-        
-        # Build list of groups to add
-        groups.each do |g|
-            @log.debug("Group acting on is #{g}")
-            @log.debug("For user #{fog_object.id} checking group #{g[:name]}")
-            
-            # Assume adding group
-            add_group = true
-            current_user_groups.each do |cmg|
-                add_group = false if cmg[:name] == g[:name]
-            end
-            if add_group
-                # If we find a group that's not currently present we prepare to add it
-                @log.debug("Adding #{g[:arn]} to list" )
-                user_groups_to_add << { :name => g[:name] }
-            end
-        end
-        
-        # Find groups to remove
-        groups.each do |g|
-            # If we find a current group that matches the desired group, then
-            # remove that from the list of current groups - we will remove any
-            # remaining groups
-            current_user_groups.delete_if do |c|
-                if c[:name] == g[:name]
-                    @log.debug( "#{g[:name]} already exists" )
-                    true # so that delete_if removes the list item
-                else
-                    false
-                end
-            end
-        end
-
-        # At the end of this loop, anything left in the current_user_groups list
-        # represents a group that's present on the user, but should be removed
-        # (since there's no matching desired group), so delete those.
-
-        current_user_groups.each do |g|
-            @log.debug( "Removing group #{p.inspect} from #{fog_object.id}" )
-            @log.info( "For user #{fog_object.id} removing group #{g[:name]}" )
-            @iam.remove_user_from_group(g[:name], fog_object.id)
-        end
-        
-        user_groups_to_add.each do |g|
-            @log.debug( "For user #{fog_object.id} attaching group #{g}" )
-            @log.info( "For user #{fog_object.id} attaching group #{g[:name]}" )
-            gp = @iam.groups.select { |r| r.name == g[:name] }.first
-            gp.add_user(fog_object)
-        end
-        
-    end
 
     def read
         @iam.users.select { |r| r.id == @options[:id] }.first
@@ -244,6 +177,11 @@ class BuildCloud::IAMUser
         
         fog_object.policies.each do |p|
             @iam.delete_user_policy(@options[:id], p.id)
+        end
+
+        #remove from group
+        @iam.list_groups_for_user(@options[:id]).body['GroupsForUser'].each do |g|
+            @iam.remove_user_from_group(g['GroupName'], fog_object.id)
         end
         
         #remove all users
