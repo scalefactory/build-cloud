@@ -138,7 +138,7 @@ class BuildCloud::IAMGroup
 
         group_policies_to_add.each do |p|
             @log.debug( "For group #{fog_object.name} adding/updating policy #{p}" )
-            @log.info( "For user #{fog_object.name} adding/updating policy #{p[:id]}" )
+            @log.info( "For group #{fog_object.name} adding/updating policy #{p[:id]}" )
             @iam.put_group_policy( fog_object.name, p[:id], p[:document] )
         end
         
