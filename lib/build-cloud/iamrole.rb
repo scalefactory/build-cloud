@@ -19,42 +19,125 @@ class BuildCloud::IAMRole
     end
 
     def create
-        
-        return if exists?
-
-        @log.info( "Creating new IAM role for #{@options[:rolename]}" )
 
         policies = @options.delete(:policies)
 
-        # Genuinely don't think I've understood the data model with 
-        # this stuff.  In particular how roles, instance profiles etc. relate
-        #
-        # It does what we need right now though, and can be revisited if necessary
+        unless exists?
 
-        role = @iam.roles.new( @options )
-        role.save
+            @log.info( "Creating new IAM role for #{@options[:rolename]}" )
 
-        @log.debug( role.inspect )
+            # Genuinely don't think I've understood the data model with 
+            # this stuff.  In particular how roles, instance profiles etc. relate
+            #
+            # It does what we need right now though, and can be revisited if necessary
 
-        @iam.create_instance_profile( @options[:rolename] )
+            role = @iam.roles.new( @options )
+            role.save
 
-        policies.each do |policy|
+            @log.debug( role.inspect )
 
-            @log.debug( "Adding policy #{policy}" )
+            @iam.create_instance_profile( @options[:rolename] )
 
-            policy_document = JSON.parse( policy[:policy_document] )
-
-            @iam.put_role_policy( @options[:rolename], policy[:policy_name],
-                policy_document )
+            @iam.add_role_to_instance_profile( @options[:rolename], @options[:rolename] )
 
         end
 
-        @iam.add_role_to_instance_profile( @options[:rolename], @options[:rolename] )
+        rationalise_policies( policies )
 
     end
 
     def read
         @iam.roles.select { |r| r.rolename == @options[:rolename] }.first
+    end
+    
+    
+    def rationalise_policies( policies )
+
+        if policies.nil?
+            policies = {}
+        end
+
+        current_policies = []
+        policies_to_add  = []
+
+        # Read all the existing policies from the role object. Turn what we find into
+        # a list of hashes, where the hash parameter names match those that we use
+        # in the YAML description.  This will aid comparison of current vs. desired policies
+
+        policy_names = @iam.list_role_policies(fog_object.rolename).body["PolicyNames"]
+        
+        unless policy_names.nil? 
+
+            policy_names.each do |policy_name|
+
+                c = {
+                    :policy_document => @iam.get_role_policy(fog_object.rolename, policy_name).body["Policy"]["PolicyDocument"],
+                    :policy_name     => policy_name,
+                }
+
+                current_policies << c
+
+            end
+        end
+        
+        policies.each do |p|
+            @log.debug("For role #{fog_object.rolename} checking policy #{p[:policy_name]}")
+            
+            # Assume adding policy
+            pa = {
+                :policy_document => JSON.parse(p[:policy_document]),
+                :policy_name     => p[:policy_name],
+            }
+
+            policies_to_add << pa
+            
+            # If we find a current policy that matches the desired policy, then
+            # remove that from the list of current policies - we will remove any
+            # remaining policies
+            current_policies.delete_if do |c|
+                if c[:policy_name] == p[:policy_name]
+                    @log.debug( "#{p[:policy_name]} already exists" )
+                    
+                    # Remove from the policies to add if the policy documents match
+                    policies_to_add.delete_if do |a|
+                        if (c[:policy_name] == a[:policy_name]) and
+                           (c[:policy_document] == a[:policy_document])
+                            @log.debug("#{p[:policy_name]} is a match" )
+                            true
+                        else
+                            @log.debug("#{p[:policy_name]} is different" )
+                            @log.debug("new policy is '#{a[:policy_document]}'")
+                            @log.debug("current policy is '#{c[:policy_document]}'")
+                            false
+                        end
+                    end
+                    true # so that delete_if removes the list item
+                else
+                    false
+                end
+            end
+        end
+
+        # At the end of this loop, anything left in the current_policies list
+        # represents a policy that's present on the infra, but should be deleted
+        # (since there's no matching desired policy), so delete those.
+
+        current_policies.each do |p|
+
+            @log.debug( "Removing policy #{p.inspect}" )
+            @log.info( "For role #{fog_object.rolename} removing policy #{p[:policy_name]}" )
+            @iam.delete_role_policy(fog_object.rolename, p[:policy_name])
+
+        end
+
+        policies_to_add.each do |p|
+
+            @log.debug( "For role #{fog_object.rolename} adding/updating policy #{p}" )
+            @log.info( "For role #{fog_object.rolename} adding/updating policy #{p[:policy_name]}" )
+            @iam.put_role_policy( fog_object.rolename, p[:policy_name], p[:policy_document] )
+
+        end
+
     end
 
     alias_method :fog_object, :read
@@ -82,4 +165,3 @@ class BuildCloud::IAMRole
     end
 
 end
-

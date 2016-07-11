@@ -1,5 +1,7 @@
 # Changelog
 
+2016-07-08 - version 0.0.20 - Add support for creating Users, Groups and lifecycle management of their policies. Add support for creating and deleting custom Managed Policies, no lifecycle support for policy versions. Improve IAM role support, lifecycle support for policies: now removes and updates role policies if they change/removed. Add policy lifecycle to S3 buckets.
+
 2016-06-17 - version 0.0.19 - add sqs support
 
 2016-06-16 - version 0.0.18 - fix cache parameter group creation for elasticache
