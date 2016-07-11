@@ -53,10 +53,9 @@ class BuildCloud::IAMRole
     
     def rationalise_policies( policies )
 
-        if policies.nil?
-            policies = {}
-        end
+        policies = {} if policies.nil?
 
+        managed_policies_to_add  = []
         current_policies = []
         policies_to_add  = []
 
@@ -80,16 +79,27 @@ class BuildCloud::IAMRole
             end
         end
         
+        # Build add lists
         policies.each do |p|
-            @log.debug("For role #{fog_object.rolename} checking policy #{p[:policy_name]}")
-            
-            # Assume adding policy
-            pa = {
-                :policy_document => JSON.parse(p[:policy_document]),
-                :policy_name     => p[:policy_name],
-            }
+            @log.debug("Policy action on is #{p}")
+            if p[:arn]
+                # Ensure any Managed Policies are attached. Fog support is limited, so always adds
+                @log.debug("For group #{fog_object.rolename} adding managed policy #{p[:arn]}")
+                managed_policies_to_add << { :arn => p[:arn] }
+            elsif p[:policy_name]
+                @log.debug("For role #{fog_object.rolename} checking policy #{p[:policy_name]}")
+                # Assume adding policy
+                pa = {
+                    :policy_document => JSON.parse(p[:policy_document]),
+                    :policy_name     => p[:policy_name],
+                }
+                policies_to_add << pa
+            end
+        end
 
-            policies_to_add << pa
+        
+        policies.each do |p|
+            @log.debug("For role #{fog_object.rolename}  policy #{p.inspect}")
             
             # If we find a current policy that matches the desired policy, then
             # remove that from the list of current policies - we will remove any
@@ -136,6 +146,13 @@ class BuildCloud::IAMRole
             @log.info( "For role #{fog_object.rolename} adding/updating policy #{p[:policy_name]}" )
             @iam.put_role_policy( fog_object.rolename, p[:policy_name], p[:policy_document] )
 
+        end
+        
+        # IAM Role Policy support is not complete in fog-aws, always attach policy
+        managed_policies_to_add.each do |p|
+            @log.debug( "For role #{fog_object.rolename} attaching policy #{p}" )
+            @log.info( "For role #{fog_object.rolename} attaching policy #{p[:arn]}" )
+            @iam.attach_role_policy(fog_object.rolename, p[:arn])
         end
 
     end
