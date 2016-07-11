@@ -58,7 +58,7 @@ class BuildCloud::S3Bucket
         begin
             @log.debug("Inspect #{@s3.get_bucket_policy(fog_object.key)}")
             current_policy = @s3.get_bucket_policy(fog_object.key)
-        rescue Excon::Error::NotFound
+        rescue Excon::Errors::NotFound
             current_policy = nil
         end
 
