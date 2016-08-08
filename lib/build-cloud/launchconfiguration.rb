@@ -82,46 +82,42 @@ class BuildCloud::LaunchConfiguration
             launch_config = @as.configurations.new( options )
             launch_config.save
         else
-            # Some data jogging to get the block device mapping options into the 
-            # same format that fog_object returns them.
             fog_options = {}
-            fog_options[:id] = fog_object.id
-            fog_options[:associate_public_ip] = fog_object.associate_public_ip
-            fog_options[:ebs_optimized] = fog_object.ebs_optimized
-            fog_options[:iam_instance_profile] = fog_object.iam_instance_profile
-            fog_options[:image_id] = fog_object.image_id
-            fog_options[:instance_type] = fog_object.instance_type
-            fog_options[:kernel_id] = fog_object.kernel_id
-            fog_options[:key_name] = fog_object.key_name
-            fog_options[:ramdisk_id] = fog_object.ramdisk_id
-            fog_options[:security_groups] = fog_object.security_groups
-            fog_options[:user_data] = Base64.decode64(fog_object.user_data)
-            fog_options[:spot_price] = fog_object.spot_price
-            fog_options[:placement_tenancy] = fog_object.placement_tenancy
-            
-            fog_options[:block_device_mappings] = []
-            fog_object.block_device_mappings.each do |mapping|
-                block_device = {}
-                for key, value in mapping
-                    keyname = format("#{key}")
-                    if keyname == 'Ebs'
-                        for ebs_key, ebs_value in value
-                            ebs_value = Integer(ebs_value) rescue ebs_value
-                            block_device.merge!({ :"Ebs.#{ebs_key}" => ebs_value })
+            fog_object.attributes.each do |k, v|
+                if v.nil?
+                    next
+                elsif k == :user_data
+                    # need to decode the user_data
+                    fog_options[k] = Base64.decode64(v)
+                elsif k == :block_device_mappings
+                    # Some data jogging to get the block device mapping options into the 
+                    # same format that fog_object returns them.
+                    fog_options[:block_device_mappings] = []
+                    v.each do |mapping|
+                        block_device = {}
+                        for key, value in mapping
+                            keyname = format("#{key}")
+                            if keyname == 'Ebs'
+                                for ebs_key, ebs_value in value
+                                    ebs_value = Integer(ebs_value) rescue ebs_value
+                                    block_device.merge!({ :"Ebs.#{ebs_key}" => ebs_value })
+                                end
+                            else
+                                block_device.merge!({ :"#{keyname}" => value })
+                            end
                         end
-                    else
-                        block_device.merge!({ :"#{keyname}" => value })
+                        fog_options[k].push(block_device)
                     end
+                elsif k == :instance_monitoring
+                    # instance monitoring value needs to be tweaked
+                    fog_options[k] = {:enabled => v}
+                elsif k == :classic_link_security_groups and v.empty?
+                    next
+                elsif k == :created_at or k == :arn
+                    next
+                else
+                    fog_options[k] = v
                 end
-                fog_options[:block_device_mappings].push(block_device)
-            end
-            
-            unless fog_object.instance_monitoring
-                fog_options[:instance_monitoring] = {:enabled => false}
-            end
-            
-            fog_options.each do |k,v|
-                fog_options.delete(k) if v.nil?
             end
             
             # Duplicate options and then ensure that some defaults are present if missing
@@ -132,12 +128,16 @@ class BuildCloud::LaunchConfiguration
                 munged_options[:ebs_optimized] = false
             end
             
+            if munged_options[:instance_monitoring].nil?
+                munged_options[:instance_monitoring] = {:enabled => true}
+            end
+            
             differences = Hash[*(
-                (fog_options.size > munged_options.size)    \
-                  ? fog_options.to_a - munged_options.to_a \
-                  : munged_options.to_a - fog_options.to_a
-                ).flatten] 
-                
+                (fog_options.size > munged_options.size) \
+                ? fog_options.to_a - munged_options.to_a \
+                : munged_options.to_a - fog_options.to_a
+            ).flatten] 
+            
             @log.debug("Fog options: #{fog_options.inspect}")
             @log.debug("Munged options: #{munged_options.inspect}")
             
