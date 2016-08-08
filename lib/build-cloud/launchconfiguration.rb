@@ -86,6 +86,11 @@ class BuildCloud::LaunchConfiguration
             fog_object.attributes.each do |k, v|
                 if v.nil?
                     next
+                elsif k == :id
+                    # launch config id has time stamp appended.
+                    # fog_object returns the latest matching launch config
+                    # but to do a match for changed values we need to modify
+                    fog_options[k] = options[:id]
                 elsif k == :user_data
                     # need to decode the user_data
                     fog_options[k] = Base64.decode64(v)
@@ -150,57 +155,39 @@ class BuildCloud::LaunchConfiguration
                     @log.info(" ... updating #{k}")
                 end
                 
-                # create a temp configuration
-                fog_options[:id] = "#{fog_options[:id]}_temp"
+                # create new configuration
+                # update id to have current unix timestamp
+                munged_options = options.dup
+                munged_options[:id] = "#{munged_options[:id]}_#{Time.now.to_i}"
+                current_launch_id = "#{fog_object.id}"
                 
-                dsl = @as.describe_launch_configurations( { 'LaunchConfigurationNames' => fog_options[:id]} )
+                dsl = @as.describe_launch_configurations( { 'LaunchConfigurationNames' => munged_options[:id]} )
                 dsl = dsl.body['DescribeLaunchConfigurationsResult']['LaunchConfigurations']
                 if dsl.empty?
-                    @log.info( "Creating launch configuration #{fog_options[:id]}" )
-                    
-                    temp_launch_config = @as.configurations.new( fog_options )
-                    temp_launch_config.save
-                    
-                    # update any associated ASG's
-                    # get list of ASG's
-                    asgs = @as.describe_auto_scaling_groups().body['DescribeAutoScalingGroupsResult']['AutoScalingGroups']
-                    
-                    # Update any that are using our taget LaunchConfigurationName
-                    asgs.each do |asg|
-                        @log.debug("Checking ASG #{asg['AutoScalingGroupName']}")
-                        if asg['LaunchConfigurationName'] == options[:id]
-                            @log.info("Updating ASG #{asg['AutoScalingGroupName']} ")
-                            @as.update_auto_scaling_group(asg['AutoScalingGroupName'], {'LaunchConfigurationName' => fog_options[:id]})
-                        end
-                    end
-                    
-                    # delete current ASG Configuration
-                    @as.delete_launch_configuration( options[:id] )
+                    @log.info("Creating launch configuration #{munged_options[:id]}")
                     
                     # create new fog object
-                    @log.debug( "Updating launch configuration #{options[:id]}" )
-                    launch_config = @as.configurations.new( options )
+                    launch_config = @as.configurations.new( munged_options )
                     launch_config.save
                     
                     # update any associated ASG's
-                    # refresh asg list
                     asgs = @as.describe_auto_scaling_groups().body['DescribeAutoScalingGroupsResult']['AutoScalingGroups']
                     asgs.each do |asg|
                         @log.debug("Checking ASG #{asg['AutoScalingGroupName']}")
-                        if asg['LaunchConfigurationName'] == fog_options[:id]
-                            @log.info("Resetting ASG #{asg['AutoScalingGroupName']} ")
-                            @as.update_auto_scaling_group(asg['AutoScalingGroupName'], {'LaunchConfigurationName' => options[:id]})
+                        if asg['LaunchConfigurationName'] == current_launch_id
+                            @log.info("Updating ASG #{asg['AutoScalingGroupName']} ")
+                            @as.update_auto_scaling_group(asg['AutoScalingGroupName'], {'LaunchConfigurationName' => munged_options[:id]})
                         end
                     end
                     
-                    # delete temp configuration
-                    @as.delete_launch_configuration( fog_options[:id] )
+                    # delete old configuration
+                    @log.info("Deleting launch configuration #{current_launch_id}")
+                    @as.delete_launch_configuration( current_launch_id )
                 else
-                    @log.error("Temporary Launch Configuration #{fog_options[:id]}_temp already exists!")
+                    @log.error("Launch Configuration #{munged_options[:id]} already exists!")
                     @log.error("Not updating ASG Launch Configuration #{options[:id]}")
                 end
             end
-            
             
         end
 
@@ -209,7 +196,33 @@ class BuildCloud::LaunchConfiguration
     end
 
     def read
-        @as.configurations.select { |lc| lc.id == @options[:id] }.first
+        # ASG Launch configs are now created with a _unix_timestamp at the end
+        # identify matching and return the one which was last created
+        confs = @as.configurations.select { |lc| lc.id.start_with?(@options[:id]) }
+        
+        confs.each do |conf|
+            begin
+                id = conf.id.dup
+                # if ID's match exactly, then keep in list
+                next if id == @options[:id]
+                sliced = id.slice!("#{@options[:id]}_")
+                # if we can't slice off the id and _ then assume it's not one of our LC
+                raise "No initial time match" if sliced.nil?
+                time_slice = id.to_i
+                # if converted int and string don't match, then it's not a match
+                raise "No true int derived" unless time_slice.to_s == id
+                # if we have an int that is 0, then it's not a match
+                raise "Time int derived as 0" if time_slice == 0
+                dt = Time.at(time_slice)
+                @log.debug("Derived time stamp for #{conf.id} is #{dt}")
+            rescue
+                @log.debug("#{conf.id} is not a match")
+                @log.debug("Details: #{$!}")
+                confs.delete(conf)
+            end
+        end
+        
+        confs.max_by {|o| o.created_at}
     end
 
     alias_method :fog_object, :read
