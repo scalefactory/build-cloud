@@ -82,6 +82,7 @@ class BuildCloud::LaunchConfiguration
             launch_config = @as.configurations.new( options )
             launch_config.save
         else
+            @log.debug( "Assessing launch configuration #{@options[:id]}" )
             fog_options = {}
             fog_object.attributes.each do |k, v|
                 if v.nil?
@@ -137,22 +138,25 @@ class BuildCloud::LaunchConfiguration
                 munged_options[:instance_monitoring] = {:enabled => true}
             end
             
-            differences = Hash[*(
-                (fog_options.size > munged_options.size) \
-                ? fog_options.to_a - munged_options.to_a \
-                : munged_options.to_a - fog_options.to_a
-            ).flatten] 
-            
             @log.debug("Fog options: #{fog_options.inspect}")
             @log.debug("Munged options: #{munged_options.inspect}")
             
+            differences = {}
+            removals = {}
+            munged_options.each {|k, v| differences[k] = fog_options[k] if fog_options[k] != v }
+            fog_options.each {|k, v| removals[k] = munged_options[k] if ! munged_options[k] }
+            
             unless fog_options == munged_options
                 @log.debug("Differences between fog and options is: #{differences}")
+                @log.debug("Removals between fog and options is: #{removals}")
                 
                 @log.info("Updating Launch Configuration #{fog_object.id}")
                 # Now for some useful messaging
                 differences.each do |k,v|
                     @log.info(" ... updating #{k}")
+                end
+                removals.each do |k,v|
+                    @log.info(" ... removing #{k}")
                 end
                 
                 # create new configuration
