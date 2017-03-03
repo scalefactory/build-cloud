@@ -1,5 +1,7 @@
 # Changelog
 
+2017-03-01 - version 0.0.23 - Fix a bug where non-string values for interpolated variables caused a crash.
+
 2016-10-18 - version 0.0.22 - Fix launch configuration error where drives are different in config to fog.
 
 2016-07-22 - version 0.0.21 - Add support for replacing changed ASG Launch Configurations

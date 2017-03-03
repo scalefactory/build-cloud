@@ -235,7 +235,7 @@ class BuildCloud
                 # $& is the whole matched expression above, $MATCH when using English
                 exp = $&
 
-                val = @config.fetch(var.to_sym, default)
+                val = @config.fetch(var.to_sym, default).to_s
                 raise "Attempt to interpolate with non-existant key '#{var}' with no default value set" if val.nil?
 
                 h.gsub!(exp, val)
