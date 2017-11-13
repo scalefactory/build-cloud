@@ -47,7 +47,7 @@ class BuildCloud::IAMRole
     end
 
     def read
-        @iam.roles.select { |r| r.rolename == @options[:rolename] }.first
+        @iam.roles.get(@options[:rolename])
     end
     
     
