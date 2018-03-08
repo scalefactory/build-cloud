@@ -257,6 +257,7 @@ class BuildCloud
         fog_options_regionless = {
             :aws_access_key_id     => @config[:aws_access_key_id] ||= ENV['AWS_ACCESS_KEY_ID'],
             :aws_secret_access_key => @config[:aws_secret_access_key] ||= ENV['AWS_SECRET_ACCESS_KEY'],
+            :aws_session_token     => @config[:aws_session_token] ||= ENV['AWS_SESSION_TOKEN'],
         }
 
         fog_options = fog_options_regionless.merge( { :region => @config[:aws_region] } )
