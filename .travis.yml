@@ -1,0 +1,13 @@
+language: ruby
+rvm:
+- 2.2
+sudo: false
+script: true
+deploy:
+  provider: rubygems
+  gem: aws_assume_role
+  on:
+    tags: true
+    repo: scalefactory/aws-assume-role
+  api_key:
+    secure: FTsTX81mPHK9gZRrDM4k1CxOqe8eCjBQYLn0bEKGW+ratghUsXyfdxWVkF906DMKqZ2nh+hHq3z9FmfX109Tv8GGjg9IGGRTnl91A6GdHtTjwg3oRGRSDeBgBgOuKxzGS+WnsYfPJ8qYF7XSa9ohSIujMLJFixuym5I8vUmpfy8=
