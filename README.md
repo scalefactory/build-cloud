@@ -1,4 +1,5 @@
 # Build::Cloud
+[![Build Status](https://travis-ci.org/scalefactory/build-cloud.svg?branch=master)](https://travis-ci.org/scalefactory/build-cloud)
 
 Tools for building resources in AWS
 
