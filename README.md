@@ -1,5 +1,6 @@
 # Build::Cloud
 [![Build Status](https://travis-ci.org/scalefactory/build-cloud.svg?branch=master)](https://travis-ci.org/scalefactory/build-cloud)
+[![Gem Version](https://badge.fury.io/rb/build-cloud.svg)](https://badge.fury.io/rb/build-cloud)
 
 Tools for building resources in AWS
 
