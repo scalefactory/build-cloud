@@ -1,13 +1,14 @@
 language: ruby
+cache: bundler
 rvm:
 - 2.2
 sudo: false
 script: true
 deploy:
   provider: rubygems
-  gem: aws_assume_role
+  api_key:
+    secure: jEc3woY9TQYOAVbVRINM2qsZNa5PeV9c8ci7GWyF9nabOnnPVH7yDsLgA1amSyJN6KCMyZ8yXeCLWrVDLXJiuGXRUFCDsciu05G8o3vVr1Z8ytntOjalhDXY5Tq2hxeILRv6Ls665nqrxpbFJYW2ovDKJx+03lCAzn71yC+hmVM=
+  gem: build-cloud
   on:
     tags: true
-    repo: scalefactory/aws-assume-role
-  api_key:
-    secure: FTsTX81mPHK9gZRrDM4k1CxOqe8eCjBQYLn0bEKGW+ratghUsXyfdxWVkF906DMKqZ2nh+hHq3z9FmfX109Tv8GGjg9IGGRTnl91A6GdHtTjwg3oRGRSDeBgBgOuKxzGS+WnsYfPJ8qYF7XSa9ohSIujMLJFixuym5I8vUmpfy8=
+    repo: scalefactory/build-cloud
