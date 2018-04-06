@@ -86,9 +86,8 @@ class BuildCloud::R53RecordSet
 
     def read
         if zone
-            return zone.records.select { |r| r.name == @options[:name] }.first
+           zone.records.get @options[:name]
         end
-        nil
     end
 
     alias_method :fog_object, :read
