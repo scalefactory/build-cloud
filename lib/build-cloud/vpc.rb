@@ -35,19 +35,27 @@ class BuildCloud::VPC
     end
 
     def create
-        
-        return if exists?
-
-        @log.info( "Creating new VPC for #{@options[:cidr_block]}" )
 
         options = @options.dup
+        tag_name = options.delete(:name)
 
-        options[:tags] = { 'Name' => options.delete(:name) }
+        if !options[:tags]
+            options[:tags] = { 'Name' => tag_name }
+        end
+
+        if exists?
+            # If exists update tags
+            create_tags(options[:tags])
+            return
+        end
+
+
+        @log.info( "Creating new VPC for #{@options[:cidr_block]}" )
 
         vpc = @compute.vpcs.new( options )
         vpc.save
 
-        @compute.create_tags( vpc.id, options[:tags] )
+        create_tags(tags)
 
         wait_until_ready
 
@@ -84,5 +92,11 @@ class BuildCloud::VPC
         @options[key]
     end
 
-end
+    def create_tags(tags)
+        if tags != fog_object.tags
+            @log.info("Updating tags")
+            @compute.create_tags( fog_object.id, tags )
+        end
+    end
 
+end
