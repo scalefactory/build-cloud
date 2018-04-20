@@ -1,5 +1,7 @@
 # Changelog
 
+2018-04-12 - version 1.1.2 - version bump.
+
 2018-04-12 - version 1.0.1 - VPC's now lifecycle tags.
 
 2017-11-13 - version 0.0.24 - Fix a bug which prevented working with IAM roles in AWS accounts with more than 100 roles. Thank you @markchalloner!
