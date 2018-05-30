@@ -19,12 +19,18 @@ class BuildCloud::ASGroup
     end
 
     def create
-        
-        return if exists?
-
-        @log.info( "Creating AS Group #{@options[:id]}" )
 
         options = @options.dup
+
+        if exists?
+            # If exists update tags
+            if options[:tags]
+                create_tags(options[:tags])
+            end
+            return
+        end
+
+        @log.info( "Creating AS Group #{options[:id]}" )
 
         unless options[:vpc_zone_identifier]
 
@@ -67,6 +73,32 @@ class BuildCloud::ASGroup
 
         fog_object.destroy( :force => true )
 
+    end
+
+    def create_tags(tags)
+        @log.debug("Tags passed in: #{tags.inspect}")
+        @log.debug("Current tags: #{fog_object.tags.inspect}")
+        tag_array = fog_object.tags.dup
+        tags.each do |k,v|
+            if tag_array.find {|t| t['Key'] == k }
+                unless tag_array.find {|t| t['Value'] == v }
+                    tag_array.find {|t| t['Value'] = v }
+                end
+            else
+                tag_array << {
+                    "ResourceId"        => fog_object.id,
+                    "PropagateAtLaunch" => true,
+                    "Key"               => k,
+                    "Value"             => v,
+                    "ResourceType"      => "auto-scaling-group"
+                }
+            end
+        end
+        @log.debug("Tags to act on: #{tag_array.inspect}")
+        if tag_array != fog_object.tags
+            @log.info("Updating tags for ASG #{fog_object.id}")
+            @as.create_or_update_tags( tag_array )
+        end
     end
 
 end
