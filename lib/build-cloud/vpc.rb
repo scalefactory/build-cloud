@@ -50,7 +50,7 @@ class BuildCloud::VPC
         end
 
 
-        @log.info( "Creating new VPC for #{@options[:cidr_block]}" )
+        @log.info( "Creating new VPC for #{options[:cidr_block]}" )
 
         vpc = @compute.vpcs.new( options )
         vpc.save
@@ -93,9 +93,11 @@ class BuildCloud::VPC
     end
 
     def create_tags(tags)
-        if tags != fog_object.tags
-            @log.info("Updating tags")
-            @compute.create_tags( fog_object.id, tags )
+        # force symbols to strings in yaml tags
+        resolved_tags = fog_object.tags.dup.merge(tags.collect{|k,v| [k.to_s, v]}.to_h)
+        if resolved_tags != fog_object.tags
+            @log.info("Updating tags for VPC #{fog_object.id}")
+            @ec2.create_tags( fog_object.id, tags )
         end
     end
 
