@@ -47,12 +47,18 @@ class BuildCloud::Instance
     end
 
     def create
-        
-        return if exists?
-
-        @log.info( "Creating instance #{@options[:name]}" )
 
         options = @options.dup
+
+        if exists?
+            # If exists update tags
+            if options[:tags]
+                create_tags(options[:tags])
+            end
+            return
+        end
+
+        @log.info( "Creating instance #{options[:name]}" )
 
         if options[:security_group_names] or options[:security_group_ids]
             unless options[:security_group_ids]
@@ -221,6 +227,15 @@ class BuildCloud::Instance
 
         fog_object.destroy
 
+    end
+
+    def create_tags(tags)
+        # force symbols to strings in yaml tags
+        resolved_tags = fog_object.tags.dup.merge(tags.collect{|k,v| [k.to_s, v]}.to_h)
+        if resolved_tags != fog_object.tags
+            @log.info("Updating tags for EC2 instance #{fog_object.id}")
+            @ec2.create_tags( fog_object.id, tags )
+        end
     end
 
 end
