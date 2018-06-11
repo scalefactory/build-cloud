@@ -36,12 +36,20 @@ class BuildCloud::Subnet
     end
 
     def create
-        
-        return if exists?
-
-        @log.info( "Creating subnet for #{@options[:cidr_block]} ( #{@options[:name]} )" )
 
         options = @options.dup
+
+        if exists?
+            # If exists update tags
+            if options[:tags]
+                create_tags(options[:tags])
+            end
+            return
+        end
+
+        return if exists?
+
+        @log.info( "Creating subnet for #{@options[:cidr_block]} ( #{options[:name]} )" )
 
         unless options[:vpc_id]
 
@@ -84,6 +92,15 @@ class BuildCloud::Subnet
 
         fog_object.destroy
 
+    end
+
+    def create_tags(tags)
+        # force symbols to strings in yaml tags
+        resolved_tags = fog_object.tag_set.dup.merge(tags.collect{|k,v| [k.to_s, v]}.to_h)
+        if resolved_tags != fog_object.tag_set
+            @log.info("Updating tags for subnet #{fog_object.subnet_id.to_s}")
+            @compute.create_tags( fog_object.subnet_id.to_s, tags )
+        end
     end
 
 end
