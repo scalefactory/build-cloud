@@ -45,7 +45,12 @@ class BuildCloud::SecurityGroup
             options.delete(:authorized_ranges)
         end
 
-        unless exists?
+        if exists?
+            # If exists update tags
+            if options[:tags]
+                create_tags(options[:tags])
+            end
+        else
 
             @log.info( "Creating security group #{@options[:name]}" )
 
@@ -208,6 +213,15 @@ class BuildCloud::SecurityGroup
 
         fog_object.destroy
 
+    end
+
+    def create_tags(tags)
+        # force symbols to strings in yaml tags
+        resolved_tags = fog_object.tags.dup.merge(tags.collect{|k,v| [k.to_s, v]}.to_h)
+        if resolved_tags != fog_object.tags
+            @log.info("Updating tags for security group #{fog_object.name}")
+            @compute.create_tags( fog_object.group_id.to_s, tags )
+        end
     end
 
 end

@@ -1,5 +1,7 @@
 # Changelog
 
+2018-06-18 - version 1.1.5 - Security groups now add missing tags.
+
 2018-06-18 - version 1.1.4 - Subnets now add missing tags.
 
 2018-04-12 - version 1.1.3 - EC2 instances and ASG now add missing tags.
