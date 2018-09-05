@@ -97,7 +97,7 @@ class BuildCloud::VPC
         resolved_tags = fog_object.tags.dup.merge(tags.collect{|k,v| [k.to_s, v]}.to_h)
         if resolved_tags != fog_object.tags
             @log.info("Updating tags for VPC #{fog_object.id}")
-            @ec2.create_tags( fog_object.id, tags )
+            @compute.create_tags( fog_object.id, tags )
         end
     end
 
