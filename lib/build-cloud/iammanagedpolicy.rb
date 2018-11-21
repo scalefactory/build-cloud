@@ -38,8 +38,12 @@ class BuildCloud::IAMManagedPolicy
 
     end
 
+    # Fog only partly implements collection behaviour for managed policies
+    # Work around this using each() - and not, for example, select()
     def read
-        @iam.managed_policies.select { |r| r.name == @options[:name] }.first
+        @iam.managed_policies.each do |item|
+            return item if item.name == @options[:name]
+        end
     end
 
     alias_method :fog_object, :read
