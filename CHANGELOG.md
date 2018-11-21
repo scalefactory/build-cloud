@@ -1,5 +1,7 @@
 # Changelog
 
+2018-06-18 - version 1.1.7 - Handle more than 100 IAM policies
+
 2018-06-18 - version 1.1.6 - VPC tag addition now uses correct resource
 
 2018-06-18 - version 1.1.5 - Security groups now add missing tags.
